@@ -14,7 +14,7 @@
                 "isDefault": true
             },
             "presentation": {
-                "reveal": "always",
+                "reveal": "silent",
                 "panel": "shared"
             }
         },
@@ -24,7 +24,6 @@
             "args": [
                 "run"
             ],
-            // "type": "shell",
             "problemMatcher": []
         },
         {

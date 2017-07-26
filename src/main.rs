@@ -9,12 +9,19 @@ mod scene;
 mod renderer;
 
 use std::ops::Deref;
+use na::*;
+
+use primitive::*;
+use scene::*;
 
 fn main() {
     let _ = env_logger::init();
 
-    let scene = scene::Scene::new();
-    let renderer = renderer::Renderer::build_renderer(scene, 480, 320);
+    let mut scene = Scene::new();
+    scene.prims.push(Sphere::new(Point3::new(0.0, 0.0, -5.0), 1.0));
+    let mut renderer = renderer::Renderer::build_renderer(scene, 480, 320);
+
+    renderer.render();
 
     let path = &std::path::Path::new("render.png");
     let saved = image::save_buffer(path, renderer.img.deref(), renderer.w, renderer.h, image::RGB(8));
