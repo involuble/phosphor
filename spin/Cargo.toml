@@ -1,7 +1,0 @@
-[package]
-name = "spin"
-version = "0.1.0"
-authors = ["Steven"]
-
-[dependencies]
-nalgebra = "^0.12"
