@@ -3,6 +3,7 @@ extern crate log;
 extern crate env_logger;
 extern crate image;
 extern crate nalgebra as na;
+extern crate approx;
 
 mod primitive;
 mod scene;

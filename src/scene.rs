@@ -14,7 +14,7 @@ impl Scene {
             prims: Vec::new(),
             camera: Camera {
                 loc: Point3::origin(),
-                lookAt: -Vector3::z(),
+                look_at: -Vector3::z(),
                 up: Vector3::y(),
                 fov: PI/2.0,
             }

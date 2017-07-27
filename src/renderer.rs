@@ -1,5 +1,4 @@
-use std::f32::consts::PI;
-use image;
+// use image;
 use na::*;
 
 use primitive::*;
@@ -39,15 +38,15 @@ impl Renderer {
     }
 
     pub fn render(&mut self) {
-        let camera_x = self.scene.camera.lookAt.cross(&self.scene.camera.up);
+        let camera_x = self.scene.camera.look_at.cross(&self.scene.camera.up);
         for x in 0..self.w {
             for y in 0..self.h {
                 let (ss_x, ss_y) = self.screen_space_coord(x, y);
-                let camera_ray = self.scene.camera.lookAt + ss_x*camera_x + ss_y*self.scene.camera.up;
+                let camera_ray = self.scene.camera.look_at + ss_x*camera_x + ss_y*self.scene.camera.up;
                 let ray = Ray { origin: self.scene.camera.loc, dir: Unit::new_normalize(camera_ray) };
                 let hit = self.scene.prims[0].intersect(&ray);
                 let c;
-                if hit {
+                if let Some(_) = hit {
                     c = Colour::new(0.0, 1.0, 0.0);
                 } else {
                     c = Colour::black();
