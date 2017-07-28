@@ -27,15 +27,22 @@ impl Renderer {
 
     #[inline]
     fn screen_space_coord(&self, x: u32, y: u32) -> (f32, f32) {
-        debug_assert!(self.w >= self.h);
-        let aspect_ratio = self.w as f32 / self.h as f32;
+        let aspect_ratio_x;
+        let aspect_ratio_y;
+        if self.w >= self.h {
+            aspect_ratio_x = self.w as f32 / self.h as f32;
+            aspect_ratio_y = 1.0;
+        } else {
+            aspect_ratio_x = 1.0;
+            aspect_ratio_y = self.h as f32 / self.w as f32;
+        }
         let fov_scale = (self.scene.camera.fov / 2.0).tan();
         let ss_x = (x as f32 + 0.5) / self.w as f32;
         let ss_x = ss_x * 2. - 1.;
-        let ss_x = aspect_ratio * fov_scale * ss_x;
+        let ss_x = aspect_ratio_x * fov_scale * ss_x;
         let ss_y = (y as f32 + 0.5) / self.h as f32;
         let ss_y = 1. - ss_y * 2.0;
-        let ss_y = fov_scale * ss_y;
+        let ss_y = aspect_ratio_y * fov_scale * ss_y;
         (ss_x, ss_y)
     }
 
@@ -64,8 +71,9 @@ impl Renderer {
                 }
 
                 let c;
-                if let Some(_) = hit {
-                    c = Colour::new(0.0, 1.0, 0.0);
+                if let Some(i) = hit {
+                    let mat = self.scene.materials[i.material_id as usize];
+                    c = mat.colour;
                 } else {
                     c = Colour::black();
                 }

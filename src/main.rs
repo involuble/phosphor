@@ -10,6 +10,7 @@ mod primitive;
 mod scene;
 mod renderer;
 mod colour;
+mod material;
 
 use std::f32::consts::PI;
 use std::ops::Deref;
@@ -18,6 +19,7 @@ use na::*;
 use primitive::*;
 use scene::*;
 use colour::*;
+use material::*;
 
 fn main() {
     let _ = env_logger::init();
@@ -25,9 +27,23 @@ fn main() {
     let mut scene = Scene::new();
     scene.camera = Camera { loc: Point3::new(0.0, 3.0, -4.0), forward: Vector3::z(), up: Vector3::y(), fov: PI/2.0 };
 
-    scene.spheres.push(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9));
-    scene.tris.push(Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0)));
-    scene.tris.push(Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 6.0)));
+    scene.add_material(Material::new(Colour::from_luma(0.9)));
+    scene.add_material(Material::new(Colour::new(1.0, 0.0, 0.0)));
+    scene.add_material(Material::new(Colour::new(0.0, 1.0, 0.0)));
+    scene.add_material(Material::new(Colour::black()));
+    scene.add_material(Material::new(Colour::from_luma(1.0)));
+
+    // Back wall
+    scene.add_triangle(Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), 0));
+    scene.add_triangle(Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 6.0), 0));
+    // Left wall
+    scene.add_triangle(Triangle::new(Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 0.0, 6.0), Point3::new(-3.0, 6.0, 6.0), 1));
+    scene.add_triangle(Triangle::new(Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 0.0), 1));
+    // Right wall
+    scene.add_triangle(Triangle::new(Point3::new( 3.0, 0.0, 0.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), 2));
+    scene.add_triangle(Triangle::new(Point3::new( 3.0, 0.0, 0.0), Point3::new( 3.0, 6.0, 6.0), Point3::new( 3.0, 6.0, 0.0), 2));
+
+    scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 4));
     let mut renderer = renderer::Renderer::build_renderer(scene, 320, 240);
 
     renderer.render();
