@@ -1,5 +1,4 @@
 use na::*;
-use approx;
 use std::f32;
 
 type UnitVector3<T> = Unit<Vector3<T>>;

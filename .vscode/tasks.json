@@ -24,6 +24,10 @@
             "args": [
                 "run"
             ],
+                "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
             "problemMatcher": []
         },
         {

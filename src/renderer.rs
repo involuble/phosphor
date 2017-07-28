@@ -49,7 +49,13 @@ impl Renderer {
 
                 let mut hit = None;
                 let get_dist = |o: &Option<Intersection>| o.map_or(f32::INFINITY, |i| i.d);
-                for prim in &self.scene.prims {
+                for prim in &self.scene.tris {
+                    let new_hit = prim.intersect(&ray);
+                    if get_dist(&new_hit) < get_dist(&hit) {
+                        hit = new_hit;
+                    }
+                }
+                for prim in &self.scene.spheres {
                     let new_hit = prim.intersect(&ray);
                     if get_dist(&new_hit) < get_dist(&hit) {
                         hit = new_hit;

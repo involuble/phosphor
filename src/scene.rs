@@ -4,14 +4,16 @@ use na::*;
 use primitive::*;
 
 pub struct Scene {
-    pub prims: Vec<Triangle>,
+    pub tris: Vec<Triangle>,
+    pub spheres: Vec<Sphere>,
     pub camera: Camera,
 }
 
 impl Scene {
     pub fn new() -> Self {
         Scene {
-            prims: Vec::new(),
+            tris: Vec::new(),
+            spheres: Vec::new(),
             camera: Camera {
                 loc: Point3::origin(),
                 forward: -Vector3::z(),
