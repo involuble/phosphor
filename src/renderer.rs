@@ -1,5 +1,6 @@
 // use image;
 use na::*;
+use std::f32;
 
 use primitive::*;
 use scene::*;
@@ -38,13 +39,23 @@ impl Renderer {
     }
 
     pub fn render(&mut self) {
-        let camera_x = self.scene.camera.look_at.cross(&self.scene.camera.up);
+        let camera_x = self.scene.camera.forward.cross(&self.scene.camera.up);
         for x in 0..self.w {
             for y in 0..self.h {
                 let (ss_x, ss_y) = self.screen_space_coord(x, y);
-                let camera_ray = self.scene.camera.look_at + ss_x*camera_x + ss_y*self.scene.camera.up;
+
+                let camera_ray = self.scene.camera.forward + ss_x*camera_x + ss_y*self.scene.camera.up;
                 let ray = Ray { origin: self.scene.camera.loc, dir: Unit::new_normalize(camera_ray) };
-                let hit = self.scene.prims[0].intersect(&ray);
+
+                let mut hit = None;
+                let get_dist = |o: &Option<Intersection>| o.map_or(f32::INFINITY, |i| i.d);
+                for prim in &self.scene.prims {
+                    let new_hit = prim.intersect(&ray);
+                    if get_dist(&new_hit) < get_dist(&hit) {
+                        hit = new_hit;
+                    }
+                }
+
                 let c;
                 if let Some(_) = hit {
                     c = Colour::new(0.0, 1.0, 0.0);
@@ -57,9 +68,9 @@ impl Renderer {
     }
 
     fn set_pixel(&mut self, x: u32, y: u32, colour: Colour) {
+        let r = (colour.r * 255.0) as u8;
         let g = (colour.g * 255.0) as u8;
         let b = (colour.b * 255.0) as u8;
-        let r = (colour.r * 255.0) as u8;
         let index = y * self.w + x;
         let i = (index*3) as usize;
         self.img[i  ] = r;

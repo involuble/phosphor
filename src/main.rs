@@ -3,14 +3,16 @@ extern crate log;
 extern crate env_logger;
 extern crate image;
 extern crate nalgebra as na;
+#[macro_use]
 extern crate approx;
+
+use std::f32::consts::PI;
+use std::ops::Deref;
+use na::*;
 
 mod primitive;
 mod scene;
 mod renderer;
-
-use std::ops::Deref;
-use na::*;
 
 use primitive::*;
 use scene::*;
@@ -19,8 +21,12 @@ fn main() {
     let _ = env_logger::init();
 
     let mut scene = Scene::new();
-    scene.prims.push(Sphere::new(Point3::new(0.0, 0.0, -5.0), 1.0));
-    let mut renderer = renderer::Renderer::build_renderer(scene, 480, 320);
+    scene.camera = Camera { loc: Point3::new(0.0, 3.0, -4.0), forward: Vector3::z(), up: Vector3::y(), fov: PI/2.0 };
+
+    // scene.prims.push(Sphere::new(Point3::new(0.5, 0.0, -5.0), 1.0));
+    scene.prims.push(Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0)));
+    scene.prims.push(Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 6.0)));
+    let mut renderer = renderer::Renderer::build_renderer(scene, 320, 240);
 
     renderer.render();
 

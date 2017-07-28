@@ -4,7 +4,7 @@ use na::*;
 use primitive::*;
 
 pub struct Scene {
-    pub prims: Vec<Sphere>,
+    pub prims: Vec<Triangle>,
     pub camera: Camera,
 }
 
@@ -14,7 +14,7 @@ impl Scene {
             prims: Vec::new(),
             camera: Camera {
                 loc: Point3::origin(),
-                look_at: -Vector3::z(),
+                forward: -Vector3::z(),
                 up: Vector3::y(),
                 fov: PI/2.0,
             }
