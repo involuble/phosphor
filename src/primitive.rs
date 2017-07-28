@@ -14,12 +14,11 @@ pub struct Triangle {
     pub p1: Point3<f32>,
     pub p2: Point3<f32>,
     pub p3: Point3<f32>,
-    pub material_id: u32,
 }
 
 impl Triangle {
-    pub fn new(p1: Point3<f32>, p2: Point3<f32>, p3: Point3<f32>, mat: u32) -> Self {
-        Triangle { p1: p1, p2: p2, p3: p3, material_id: mat }
+    pub fn new(p1: Point3<f32>, p2: Point3<f32>, p3: Point3<f32>) -> Self {
+        Triangle { p1: p1, p2: p2, p3: p3}
     }
 }
 
@@ -37,22 +36,47 @@ impl Sphere {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Intersection {
+pub struct IntersectionGeometry {
     pub p: Point3<f32>,
     pub n: UnitVector3<f32>,
     pub d: f32,
     pub u: f32,
     pub v: f32,
-    pub material_id: u32,
 }
 
 pub trait Intersectable {
+    fn intersect_geom(&self, ray: &Ray) -> Option<IntersectionGeometry>;
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Intersection {
+    pub ig: IntersectionGeometry,
+    pub material_id: u32,
+}
+
+impl Intersection {
+    pub fn get_dist(o: &Option<Intersection>) -> f32 {
+        o.map_or(f32::INFINITY, |i| i.ig.d)
+    }
+}
+
+pub trait Traceable {
     fn intersect(&self, ray: &Ray) -> Option<Intersection>;
+}
+
+impl Traceable for Sphere {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+        let i = self.intersect_geom(ray);
+        if let Some(ig) = i {
+            return Some(Intersection {ig: ig, material_id: self.material_id});
+        }
+        None
+    }
 }
 
 impl Intersectable for Sphere {
     // See https://en.wikipedia.org/wiki/Line-sphere_intersection
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+    fn intersect_geom(&self, ray: &Ray) -> Option<IntersectionGeometry> {
         let a = self.center - ray.origin;
         let adj = dot(&a, ray.dir.as_ref());
         let det = adj*adj - dot(&a,&a) + self.radius*self.radius;
@@ -73,12 +97,13 @@ impl Intersectable for Sphere {
         // TODO
         let u = 0.0;
         let v = 0.0;
-        Some(Intersection {p: p, n: Unit::new_unchecked(n), d: dist, u: u, v: v, material_id: self.material_id })
+        Some(IntersectionGeometry {p: p, n: Unit::new_unchecked(n), d: dist, u: u, v: v})
     }
 }
 
 impl Intersectable for Triangle {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+    // http://www.cs.virginia.edu/~gfx/Courses/2003/ImageSynthesis/papers/Acceleration/Fast MinimumStorage RayTriangle Intersection.pdf
+    fn intersect_geom(&self, ray: &Ray) -> Option<IntersectionGeometry> {
         let p = self.p1;
         let u = self.p2 - self.p1;
         let v = self.p3 - self.p1;
@@ -112,6 +137,6 @@ impl Intersectable for Triangle {
             return None;
         }
 
-        Some(Intersection {p: Point3::from_coordinates(w), n: Unit::new_unchecked(n), d: dist, u: s, v: t, material_id: self.material_id})
+        Some(IntersectionGeometry {p: Point3::from_coordinates(w), n: Unit::new_unchecked(n), d: dist, u: s, v: t})
     }
 }

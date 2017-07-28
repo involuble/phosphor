@@ -56,23 +56,22 @@ impl Renderer {
                 let ray = Ray { origin: self.scene.camera.loc, dir: Unit::new_normalize(camera_ray) };
 
                 let mut hit = None;
-                let get_dist = |o: &Option<Intersection>| o.map_or(f32::INFINITY, |i| i.d);
-                for prim in &self.scene.tris {
+                for prim in &self.scene.spheres {
                     let new_hit = prim.intersect(&ray);
-                    if get_dist(&new_hit) < get_dist(&hit) {
+                    if Intersection::get_dist(&new_hit) < Intersection::get_dist(&hit) {
                         hit = new_hit;
                     }
                 }
-                for prim in &self.scene.spheres {
+                for prim in &self.scene.tri_lists {
                     let new_hit = prim.intersect(&ray);
-                    if get_dist(&new_hit) < get_dist(&hit) {
+                    if Intersection::get_dist(&new_hit) < Intersection::get_dist(&hit) {
                         hit = new_hit;
                     }
                 }
 
                 let c;
                 if let Some(i) = hit {
-                    let mat = self.scene.materials[i.material_id as usize];
+                    let mat = self.scene.get_material(i.material_id);
                     c = mat.colour;
                 } else {
                     c = Colour::black();

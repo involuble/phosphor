@@ -5,12 +5,14 @@ extern crate image;
 extern crate nalgebra as na;
 #[macro_use]
 extern crate approx;
+extern crate num_traits;
 
 mod primitive;
 mod scene;
 mod renderer;
 mod colour;
 mod material;
+mod triangle_list;
 
 use std::f32::consts::PI;
 use std::ops::Deref;
@@ -20,6 +22,7 @@ use primitive::*;
 use scene::*;
 use colour::*;
 use material::*;
+use triangle_list::*;
 
 fn main() {
     let _ = env_logger::init();
@@ -33,15 +36,20 @@ fn main() {
     scene.add_material(Material::new(Colour::black()));
     scene.add_material(Material::new(Colour::from_luma(1.0)));
 
-    // Back wall
-    scene.add_triangle(Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), 0));
-    scene.add_triangle(Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 6.0), 0));
-    // Left wall
-    scene.add_triangle(Triangle::new(Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 0.0, 6.0), Point3::new(-3.0, 6.0, 6.0), 1));
-    scene.add_triangle(Triangle::new(Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 0.0), 1));
-    // Right wall
-    scene.add_triangle(Triangle::new(Point3::new( 3.0, 0.0, 0.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), 2));
-    scene.add_triangle(Triangle::new(Point3::new( 3.0, 0.0, 0.0), Point3::new( 3.0, 6.0, 6.0), Point3::new( 3.0, 6.0, 0.0), 2));
+    let back_wall: Box<[Triangle]> = Box::new([
+        Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0)),
+        Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 6.0))]);
+    scene.add_triangle_list(TriangleList::from_vec(back_wall.into_vec(), 0));
+
+    let left_wall: Box<[Triangle]> = Box::new([
+        Triangle::new(Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 0.0, 6.0), Point3::new(-3.0, 6.0, 6.0)),
+        Triangle::new(Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 0.0))]);
+    scene.add_triangle_list(TriangleList::from_vec(left_wall.into_vec(), 1));
+
+    let right_wall: Box<[Triangle]> = Box::new([
+        Triangle::new(Point3::new( 3.0, 0.0, 0.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0)),
+        Triangle::new(Point3::new( 3.0, 0.0, 0.0), Point3::new( 3.0, 6.0, 6.0), Point3::new( 3.0, 6.0, 0.0))]);
+    scene.add_triangle_list(TriangleList::from_vec(right_wall.into_vec(), 2));
 
     scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 4));
     let mut renderer = renderer::Renderer::build_renderer(scene, 320, 240);

@@ -1,5 +1,6 @@
 use primitive::*;
 use material::*;
+use triangle_list::*;
 
 use std::f32::consts::PI;
 use na::*;
@@ -14,9 +15,9 @@ pub struct Camera {
 
 pub struct Scene {
     pub camera: Camera,
-    pub tris: Vec<Triangle>,
+    pub tri_lists: Vec<TriangleList>,
     pub spheres: Vec<Sphere>,
-    pub materials: Vec<Material>,
+    materials: Vec<Material>,
 }
 
 impl Scene {
@@ -28,7 +29,7 @@ impl Scene {
                 up: Vector3::y(),
                 fov: PI/2.0,
             },
-            tris: Vec::new(),
+            tri_lists: Vec::new(),
             spheres: Vec::new(),
             materials: Vec::new(),
         }
@@ -39,14 +40,18 @@ impl Scene {
         self.spheres.push(sphere);
     }
 
-    pub fn add_triangle(&mut self, triangle: Triangle) {
-        assert!(self.materials.len() as u32 > triangle.material_id, "Invalid material ID");
-        self.tris.push(triangle);
+    pub fn add_triangle_list(&mut self, list: TriangleList) {
+        assert!(self.materials.len() as u32 > list.material_id, "Invalid material ID");
+        self.tri_lists.push(list);
     }
 
     pub fn add_material(&mut self, mut material: Material) {
         let idx = self.materials.len();
         material.set_id(idx as u32);
         self.materials.push(material);
+    }
+
+    pub fn get_material(&self, id: u32) -> &Material {
+        &self.materials[id as usize]
     }
 }
