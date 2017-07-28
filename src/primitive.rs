@@ -4,35 +4,6 @@ use std::f32;
 type UnitVector3<T> = Unit<Vector3<T>>;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Colour {
-    pub g: f32,
-    pub b: f32,
-    pub r: f32,
-}
-
-impl Colour {
-    pub fn from_luma(y: f32) -> Self {
-        Colour { r: y, g: y, b: y }
-    }
-
-    pub fn new(r: f32, g: f32, b: f32) -> Self {
-        Colour { r: r, g: g, b: b }
-    }
-
-    pub fn black() -> Self {
-        Colour { r: 0.0, g: 0.0, b: 0.0 }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Camera {
-    pub loc: Point3<f32>,
-    pub forward: Vector3<f32>,
-    pub up: Vector3<f32>,
-    pub fov: f32,
-}
-
-#[derive(Debug, Clone, Copy)]
 pub struct Ray {
     pub origin: Point3<f32>,
     pub dir: Unit<Vector3<f32>>,

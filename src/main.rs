@@ -6,16 +6,18 @@ extern crate nalgebra as na;
 #[macro_use]
 extern crate approx;
 
+mod primitive;
+mod scene;
+mod renderer;
+mod colour;
+
 use std::f32::consts::PI;
 use std::ops::Deref;
 use na::*;
 
-mod primitive;
-mod scene;
-mod renderer;
-
 use primitive::*;
 use scene::*;
+use colour::*;
 
 fn main() {
     let _ = env_logger::init();

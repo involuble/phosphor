@@ -1,7 +1,15 @@
+use primitive::*;
+
 use std::f32::consts::PI;
 use na::*;
 
-use primitive::*;
+#[derive(Debug, Clone, Copy)]
+pub struct Camera {
+    pub loc: Point3<f32>,
+    pub forward: Vector3<f32>,
+    pub up: Vector3<f32>,
+    pub fov: f32,
+}
 
 pub struct Scene {
     pub tris: Vec<Triangle>,

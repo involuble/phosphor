@@ -4,6 +4,7 @@ use std::f32;
 
 use primitive::*;
 use scene::*;
+use colour::*;
 
 pub struct Renderer {
     pub scene: Scene,
