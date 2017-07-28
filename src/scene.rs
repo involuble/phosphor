@@ -27,7 +27,7 @@ impl Scene {
                 loc: Point3::origin(),
                 forward: -Vector3::z(),
                 up: Vector3::y(),
-                fov: PI/2.0,
+                fov: PI / 2.0,
             },
             tri_lists: Vec::new(),
             spheres: Vec::new(),
@@ -36,12 +36,18 @@ impl Scene {
     }
 
     pub fn add_sphere(&mut self, sphere: Sphere) {
-        assert!(self.materials.len() as u32 > sphere.material_id, "Invalid material ID");
+        assert!(
+            self.materials.len() as u32 > sphere.material_id,
+            "Invalid material ID"
+        );
         self.spheres.push(sphere);
     }
 
     pub fn add_triangle_list(&mut self, list: TriangleList) {
-        assert!(self.materials.len() as u32 > list.material_id, "Invalid material ID");
+        assert!(
+            self.materials.len() as u32 > list.material_id,
+            "Invalid material ID"
+        );
         self.tri_lists.push(list);
     }
 

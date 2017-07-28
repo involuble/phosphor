@@ -28,7 +28,12 @@ fn main() {
     let _ = env_logger::init();
 
     let mut scene = Scene::new();
-    scene.camera = Camera { loc: Point3::new(0.0, 3.0, -4.0), forward: Vector3::z(), up: Vector3::y(), fov: PI/2.0 };
+    scene.camera = Camera {
+        loc: Point3::new(0.0, 3.0, -4.0),
+        forward: Vector3::z(),
+        up: Vector3::y(),
+        fov: PI / 2.0,
+    };
 
     scene.add_material(Material::new(Colour::from_luma(0.9)));
     scene.add_material(Material::new(Colour::new(1.0, 0.0, 0.0)));
@@ -37,18 +42,45 @@ fn main() {
     scene.add_material(Material::new(Colour::from_luma(1.0)));
 
     let back_wall: Box<[Triangle]> = Box::new([
-        Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0)),
-        Triangle::new(Point3::new(-3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 6.0))]);
+        Triangle::new(
+            Point3::new(-3.0, 0.0, 6.0),
+            Point3::new(3.0, 0.0, 6.0),
+            Point3::new(3.0, 6.0, 6.0),
+        ),
+        Triangle::new(
+            Point3::new(-3.0, 0.0, 6.0),
+            Point3::new(3.0, 6.0, 6.0),
+            Point3::new(-3.0, 6.0, 6.0),
+        ),
+    ]);
     scene.add_triangle_list(TriangleList::from_vec(back_wall.into_vec(), 0));
 
     let left_wall: Box<[Triangle]> = Box::new([
-        Triangle::new(Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 0.0, 6.0), Point3::new(-3.0, 6.0, 6.0)),
-        Triangle::new(Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 0.0))]);
+        Triangle::new(
+            Point3::new(-3.0, 0.0, 0.0),
+            Point3::new(-3.0, 0.0, 6.0),
+            Point3::new(-3.0, 6.0, 6.0),
+        ),
+        Triangle::new(
+            Point3::new(-3.0, 0.0, 0.0),
+            Point3::new(-3.0, 6.0, 6.0),
+            Point3::new(-3.0, 6.0, 0.0),
+        ),
+    ]);
     scene.add_triangle_list(TriangleList::from_vec(left_wall.into_vec(), 1));
 
     let right_wall: Box<[Triangle]> = Box::new([
-        Triangle::new(Point3::new( 3.0, 0.0, 0.0), Point3::new( 3.0, 0.0, 6.0), Point3::new( 3.0, 6.0, 6.0)),
-        Triangle::new(Point3::new( 3.0, 0.0, 0.0), Point3::new( 3.0, 6.0, 6.0), Point3::new( 3.0, 6.0, 0.0))]);
+        Triangle::new(
+            Point3::new(3.0, 0.0, 0.0),
+            Point3::new(3.0, 0.0, 6.0),
+            Point3::new(3.0, 6.0, 6.0),
+        ),
+        Triangle::new(
+            Point3::new(3.0, 0.0, 0.0),
+            Point3::new(3.0, 6.0, 6.0),
+            Point3::new(3.0, 6.0, 0.0),
+        ),
+    ]);
     scene.add_triangle_list(TriangleList::from_vec(right_wall.into_vec(), 2));
 
     scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 4));
@@ -57,7 +89,13 @@ fn main() {
     renderer.render();
 
     let path = std::path::Path::new("render.png");
-    let saved = image::save_buffer(path, renderer.img.deref(), renderer.w, renderer.h, image::RGB(8));
+    let saved = image::save_buffer(
+        path,
+        renderer.img.deref(),
+        renderer.w,
+        renderer.h,
+        image::RGB(8),
+    );
     match saved {
         Ok(_) => info!("Image written successfully"),
         Err(e) => error!("Image couldn't be written: {}", e),

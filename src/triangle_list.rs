@@ -34,7 +34,10 @@ impl Traceable for TriangleList {
             }
         }
         match hit {
-            Some(ig) => Some(Intersection {ig: ig, material_id: self.material_id}),
+            Some(ig) => Some(Intersection {
+                ig: ig,
+                material_id: self.material_id,
+            }),
             None => None,
         }
     }
