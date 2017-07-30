@@ -18,7 +18,7 @@ pub struct Triangle {
 
 impl Triangle {
     pub fn new(p1: Point3<f32>, p2: Point3<f32>, p3: Point3<f32>) -> Self {
-        Triangle { p1: p1, p2: p2, p3: p3}
+        Triangle { p1: p1, p2: p2, p3: p3 }
     }
 }
 

@@ -15,7 +15,6 @@ mod material;
 mod triangle_list;
 
 use std::f32::consts::PI;
-use std::ops::Deref;
 use na::*;
 
 use primitive::*;
@@ -89,9 +88,10 @@ fn main() {
     renderer.render();
 
     let path = std::path::Path::new("render.png");
+    let img = renderer.get_srgb_img_buf();
     let saved = image::save_buffer(
         path,
-        renderer.img.deref(),
+        img.as_ref(),
         renderer.w,
         renderer.h,
         image::RGB(8),

@@ -10,13 +10,13 @@ pub struct Renderer {
     pub scene: Scene,
     pub w: u32,
     pub h: u32,
-    pub img: Box<[u8]>,
+    pub img: Box<[Colour]>,
 }
 
 impl Renderer {
     pub fn build_renderer(scene: Scene, w: u32, h: u32) -> Self {
-        let len = w * h * 3;
-        let buf = vec![0; len as usize];
+        let len = w * h;
+        let buf = vec![Colour::black(); len as usize];
         Renderer {
             scene: scene,
             w: w,
@@ -82,13 +82,18 @@ impl Renderer {
     }
 
     fn set_pixel(&mut self, x: u32, y: u32, colour: Colour) {
-        let r = (colour.r * 255.0) as u8;
-        let g = (colour.g * 255.0) as u8;
-        let b = (colour.b * 255.0) as u8;
         let index = y * self.w + x;
-        let i = (index*3) as usize;
-        self.img[i  ] = r;
-        self.img[i+1] = g;
-        self.img[i+2] = b;
+        self.img[index as usize] = colour;
+    }
+
+    pub fn get_srgb_img_buf(&self) -> Box<[u8]> {
+        let len = self.w * self.h * 3;
+        let mut buf = Vec::with_capacity(len as usize);
+        for i in 0..self.img.len() {
+            let bytes = self.img[i].into_u8_rgb();
+            buf.extend_from_slice(&bytes);
+        }
+        debug_assert!(buf.len() == buf.capacity());
+        buf.into_boxed_slice()
     }
 }
