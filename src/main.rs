@@ -13,8 +13,8 @@ mod renderer;
 mod colour;
 mod material;
 mod triangle_list;
+mod camera;
 
-use std::f32::consts::PI;
 use na::*;
 
 use primitive::*;
@@ -22,17 +22,13 @@ use scene::*;
 use colour::*;
 use material::*;
 use triangle_list::*;
+use camera::*;
 
 fn main() {
     let _ = env_logger::init();
 
     let mut scene = Scene::new();
-    scene.camera = Camera {
-        loc: Point3::new(0.0, 3.0, -4.0),
-        forward: Vector3::z(),
-        up: Vector3::y(),
-        fov: PI / 2.0,
-    };
+    let camera = Camera::new(Point3::new(0.0, 3.0, -4.0), Vector3::z(), Vector3::y(), 90.0);
 
     scene.add_material(Material::new(Colour::from_luma(0.9)));
     scene.add_material(Material::new(Colour::new(1.0, 0.0, 0.0)));
@@ -83,7 +79,7 @@ fn main() {
     scene.add_triangle_list(TriangleList::from_vec(right_wall.into_vec(), 2));
 
     scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 4));
-    let mut renderer = renderer::Renderer::build_renderer(scene, 320, 240);
+    let mut renderer = renderer::Renderer::build_renderer(scene, camera, 320, 240);
 
     renderer.render();
 

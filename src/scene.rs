@@ -2,19 +2,7 @@ use primitive::*;
 use material::*;
 use triangle_list::*;
 
-use std::f32::consts::PI;
-use na::*;
-
-#[derive(Debug, Clone, Copy)]
-pub struct Camera {
-    pub loc: Point3<f32>,
-    pub forward: Vector3<f32>,
-    pub up: Vector3<f32>,
-    pub fov: f32,
-}
-
 pub struct Scene {
-    pub camera: Camera,
     pub tri_lists: Vec<TriangleList>,
     pub spheres: Vec<Sphere>,
     materials: Vec<Material>,
@@ -23,12 +11,6 @@ pub struct Scene {
 impl Scene {
     pub fn new() -> Self {
         Scene {
-            camera: Camera {
-                loc: Point3::origin(),
-                forward: -Vector3::z(),
-                up: Vector3::y(),
-                fov: PI / 2.0,
-            },
             tri_lists: Vec::new(),
             spheres: Vec::new(),
             materials: Vec::new(),

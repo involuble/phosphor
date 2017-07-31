@@ -8,6 +8,7 @@ pub struct TriangleList {
 }
 
 impl TriangleList {
+    #[allow(dead_code)]
     pub fn new(mat: u32) -> Self {
         TriangleList {
             triangles: Vec::new(),
