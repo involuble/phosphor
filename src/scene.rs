@@ -1,10 +1,13 @@
-use primitive::*;
-use material::*;
+use primitives::*;
+use materials::*;
 use triangle_list::*;
+use lights::*;
 
 pub struct Scene {
     pub tri_lists: Vec<TriangleList>,
     pub spheres: Vec<Sphere>,
+    pub lights: Vec<Light>,
+    // TODO: Keep using material IDs or switch to references?
     materials: Vec<Material>,
 }
 
@@ -13,6 +16,7 @@ impl Scene {
         Scene {
             tri_lists: Vec::new(),
             spheres: Vec::new(),
+            lights: Vec::new(),
             materials: Vec::new(),
         }
     }

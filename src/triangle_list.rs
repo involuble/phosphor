@@ -1,6 +1,6 @@
 use std::f32;
 
-use primitive::*;
+use primitives::*;
 
 pub struct TriangleList {
     pub triangles: Vec<Triangle>,

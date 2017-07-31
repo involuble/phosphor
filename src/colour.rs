@@ -1,5 +1,5 @@
 use num_traits::{Float, Zero, clamp, NumCast};
-use std::ops::{Add, Mul};
+use std::ops::{Add, Mul, Div};
 
 #[derive(Debug, Clone, Copy)]
 pub struct ColourBase<T> where T: Float {
@@ -71,6 +71,14 @@ impl<T> Mul<T> for ColourBase<T> where T: Float {
 
     fn mul(self, rhs: T) -> Self::Output {
         ColourBase { r: self.r * rhs, g: self.g * rhs, b: self.b * rhs }
+    }
+}
+
+impl<T> Div<T> for ColourBase<T> where T: Float {
+    type Output = ColourBase<T>;
+
+    fn div(self, rhs: T) -> Self::Output {
+        ColourBase { r: self.r / rhs, g: self.g / rhs, b: self.b / rhs }
     }
 }
 

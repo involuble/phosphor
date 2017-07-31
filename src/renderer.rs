@@ -1,7 +1,7 @@
 use na::*;
 use std::f32;
 
-use primitive::*;
+use primitives::*;
 use scene::*;
 use colour::*;
 use camera::*;

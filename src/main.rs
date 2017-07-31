@@ -7,22 +7,28 @@ extern crate nalgebra as na;
 extern crate approx;
 extern crate num_traits;
 
-mod primitive;
+mod primitives;
 mod scene;
 mod renderer;
 mod colour;
-mod material;
+mod materials;
 mod triangle_list;
 mod camera;
+mod lights;
 
 use na::*;
 
-use primitive::*;
+use primitives::*;
 use scene::*;
 use colour::*;
-use material::*;
+use materials::*;
 use triangle_list::*;
 use camera::*;
+use lights::*;
+
+// NOTE: Putting this here for reference
+// trait OrdDebug: Ord + Debug {}
+// impl<T: Ord + Debug> OrdDebug for T {}
 
 fn main() {
     let _ = env_logger::init();
@@ -79,8 +85,10 @@ fn main() {
     scene.add_triangle_list(TriangleList::from_vec(right_wall.into_vec(), 2));
 
     scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 4));
-    let mut renderer = renderer::Renderer::build_renderer(scene, camera, 320, 240);
 
+    scene.lights.push(Light::new(Colour::from_luma(1.0), Point3::new(0.0, 5.7, 3.0)));
+
+    let mut renderer = renderer::Renderer::build_renderer(scene, camera, 320, 240);
     renderer.render();
 
     let path = std::path::Path::new("render.png");

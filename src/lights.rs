@@ -9,7 +9,7 @@ pub struct Light {
 }
 
 impl Light {
-    pub fn new(c: Colour, p: Point3<f32>) {
+    pub fn new(c: Colour, p: Point3<f32>) -> Self {
         Light {
             colour: c,
             position: p,
