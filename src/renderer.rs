@@ -48,36 +48,45 @@ impl Renderer {
         (ss_x, ss_y)
     }
 
+    pub fn trace_ray(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+        let mut hit = None;
+        let dist = f32::INFINITY;
+        for prim in &self.scene.spheres {
+            let new_hit = prim.intersect(&ray);
+            if SurfaceIntersection::get_dist(&new_hit) < dist {
+                hit = new_hit;
+            }
+        }
+        for prim in &self.scene.tri_lists {
+            let new_hit = prim.intersect(&ray);
+            if SurfaceIntersection::get_dist(&new_hit) < SurfaceIntersection::get_dist(&hit) {
+                hit = new_hit;
+            }
+        }
+        hit
+    }
+
+    pub fn radiance(&self, ray: &Ray) -> Colour {
+        let hit = self.trace_ray(ray);
+
+        if hit.is_none() {
+            return Colour::black();
+        }
+        let i = hit.unwrap();
+        let material = self.scene.get_material(i.material_id);
+        return material.base_colour
+    }
+
     pub fn render(&mut self) {
-        let camera_x = self.camera.forward.cross(&self.camera.up);
+        let camera_right = self.camera.forward.cross(&self.camera.up);
         for x in 0..self.w {
             for y in 0..self.h {
                 let (ss_x, ss_y) = self.screen_space_coord(x, y);
 
-                let camera_ray = self.camera.forward + ss_x*camera_x + ss_y*self.camera.up;
+                let camera_ray = self.camera.forward + ss_x*camera_right + ss_y*self.camera.up;
                 let ray = Ray { origin: self.camera.loc, dir: Unit::new_normalize(camera_ray) };
 
-                let mut hit = None;
-                for prim in &self.scene.spheres {
-                    let new_hit = prim.intersect(&ray);
-                    if Intersection::get_dist(&new_hit) < Intersection::get_dist(&hit) {
-                        hit = new_hit;
-                    }
-                }
-                for prim in &self.scene.tri_lists {
-                    let new_hit = prim.intersect(&ray);
-                    if Intersection::get_dist(&new_hit) < Intersection::get_dist(&hit) {
-                        hit = new_hit;
-                    }
-                }
-
-                let c;
-                if let Some(i) = hit {
-                    let material = self.scene.get_material(i.material_id);
-                    c = material.colour;
-                } else {
-                    c = Colour::black();
-                }
+                let c = self.radiance(&ray);
                 self.set_pixel(x, y, c);
             }
         }

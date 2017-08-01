@@ -25,8 +25,8 @@ impl TriangleList {
 }
 
 impl Traceable for TriangleList {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        let f = |o: &Option<IntersectionGeometry>| o.map_or(f32::INFINITY, |i| i.d);
+    fn intersect(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+        let f = |o: &Option<PrimitiveIntersection>| o.map_or(f32::INFINITY, |i| i.d);
         let mut hit = None;
         for tri in &self.triangles {
             let new_hit = tri.intersect_geom(&ray);
@@ -35,8 +35,8 @@ impl Traceable for TriangleList {
             }
         }
         match hit {
-            Some(ig) => Some(Intersection {
-                ig: ig,
+            Some(prim_i) => Some(SurfaceIntersection {
+                prim_i: prim_i,
                 material_id: self.material_id,
             }),
             None => None,

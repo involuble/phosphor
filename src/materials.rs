@@ -3,12 +3,12 @@ use colour::*;
 #[derive(Debug, Clone, Copy)]
 pub struct Material {
     pub id: u32,
-    pub colour: Colour,
+    pub base_colour: Colour,
 }
 
 impl Material {
     pub fn new(colour: Colour) -> Self {
-        Material { id: 0, colour: colour }
+        Material { id: 0, base_colour: colour }
     }
 
     pub fn set_id(&mut self, new_id: u32) {
