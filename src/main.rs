@@ -6,6 +6,7 @@ extern crate nalgebra as na;
 #[macro_use]
 extern crate approx;
 extern crate num_traits;
+extern crate rand;
 
 mod primitives;
 mod scene;
@@ -39,7 +40,7 @@ fn main() {
     scene.add_material(Material::new(Colour::from_luma(0.9)));
     scene.add_material(Material::new(Colour::new(1.0, 0.0, 0.0)));
     scene.add_material(Material::new(Colour::new(0.0, 1.0, 0.0)));
-    scene.add_material(Material::new(Colour::black()));
+    scene.add_material(Material::new(Colour::from_luma(1.0)));
     scene.add_material(Material::new(Colour::from_luma(1.0)));
 
     let back_wall: Box<[Triangle]> = Box::new([
@@ -55,6 +56,20 @@ fn main() {
         ),
     ]);
     scene.add_triangle_list(TriangleList::from_vec(back_wall.into_vec(), 0));
+
+    let bottom_wall: Box<[Triangle]> = Box::new([
+        Triangle::new(
+            Point3::new(-3.0, 0.0, 0.0),
+            Point3::new(3.0, 0.0, 0.0),
+            Point3::new(3.0, 0.0, 6.0),
+        ),
+        Triangle::new(
+            Point3::new(-3.0, 0.0, 0.0),
+            Point3::new(3.0, 0.0, 6.0),
+            Point3::new(-3.0, 0.0, 6.0),
+        ),
+    ]);
+    scene.add_triangle_list(TriangleList::from_vec(bottom_wall.into_vec(), 0));
 
     let left_wall: Box<[Triangle]> = Box::new([
         Triangle::new(
@@ -73,20 +88,21 @@ fn main() {
     let right_wall: Box<[Triangle]> = Box::new([
         Triangle::new(
             Point3::new(3.0, 0.0, 0.0),
-            Point3::new(3.0, 0.0, 6.0),
             Point3::new(3.0, 6.0, 6.0),
+            Point3::new(3.0, 0.0, 6.0),
         ),
         Triangle::new(
             Point3::new(3.0, 0.0, 0.0),
-            Point3::new(3.0, 6.0, 6.0),
             Point3::new(3.0, 6.0, 0.0),
+            Point3::new(3.0, 6.0, 6.0),
         ),
     ]);
     scene.add_triangle_list(TriangleList::from_vec(right_wall.into_vec(), 2));
 
     scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 4));
+    scene.add_sphere(Sphere::new(Point3::new(1.5, 1.0, 3.0), 0.9, 4));
 
-    scene.lights.push(Light::new(Colour::from_luma(1.0), Point3::new(0.0, 5.7, 3.0)));
+    scene.lights.push(PointLight::new(Colour::from_luma(1.0), Point3::new(0.0, 5.7, 3.0)));
 
     let mut renderer = renderer::Renderer::build_renderer(scene, camera, 320, 240);
     renderer.render();

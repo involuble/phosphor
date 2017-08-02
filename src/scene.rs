@@ -6,7 +6,7 @@ use lights::*;
 pub struct Scene {
     pub tri_lists: Vec<TriangleList>,
     pub spheres: Vec<Sphere>,
-    pub lights: Vec<Light>,
+    pub lights: Vec<PointLight>,
     // TODO: Keep using material IDs or switch to references?
     materials: Vec<Material>,
 }

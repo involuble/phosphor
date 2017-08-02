@@ -24,12 +24,12 @@ impl TriangleList {
     }
 }
 
-impl Traceable for TriangleList {
+impl Surface for TriangleList {
     fn intersect(&self, ray: &Ray) -> Option<SurfaceIntersection> {
         let f = |o: &Option<PrimitiveIntersection>| o.map_or(f32::INFINITY, |i| i.d);
         let mut hit = None;
         for tri in &self.triangles {
-            let new_hit = tri.intersect_geom(&ray);
+            let new_hit = tri.intersect_prim(&ray);
             if f(&new_hit) < f(&hit) {
                 hit = new_hit;
             }

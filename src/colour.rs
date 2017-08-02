@@ -1,5 +1,6 @@
 use num_traits::{Float, Zero, clamp, NumCast};
 use std::ops::{Add, Mul, Div};
+use approx::ApproxEq;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ColourBase<T> where T: Float {
@@ -54,6 +55,10 @@ impl<T> ColourBase<T> where T: Float {
     }
 
     pub fn black() -> Self {
+        ColourBase::zero()
+    }
+
+    pub fn zero() -> Self {
         ColourBase { r: Zero::zero(), g: Zero::zero(), b: Zero::zero() }
     }
 
@@ -116,6 +121,34 @@ impl<T> Div<T> for ColourBase<T> where T: Float {
 
     fn div(self, rhs: T) -> Self::Output {
         ColourBase { r: self.r / rhs, g: self.g / rhs, b: self.b / rhs }
+    }
+}
+
+impl<T: ApproxEq> ApproxEq for ColourBase<T> where T: Float, T::Epsilon: Copy {
+    type Epsilon = T::Epsilon;
+
+    fn default_epsilon() -> T::Epsilon {
+        T::default_epsilon()
+    }
+
+    fn default_max_relative() -> T::Epsilon {
+        T::default_max_relative()
+    }
+
+    fn default_max_ulps() -> u32 {
+        T::default_max_ulps()
+    }
+
+    fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
+        T::relative_eq(&self.r, &other.r, epsilon, max_relative) &&
+        T::relative_eq(&self.g, &other.g, epsilon, max_relative) &&
+        T::relative_eq(&self.b, &other.b, epsilon, max_relative)
+    }
+
+    fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
+        T::ulps_eq(&self.r, &other.r, epsilon, max_ulps) &&
+        T::ulps_eq(&self.g, &other.g, epsilon, max_ulps) &&
+        T::ulps_eq(&self.b, &other.b, epsilon, max_ulps)
     }
 }
 

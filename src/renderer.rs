@@ -48,7 +48,7 @@ impl Renderer {
         (ss_x, ss_y)
     }
 
-    pub fn trace_ray(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+    pub fn intersect_ray(&self, ray: &Ray) -> Option<SurfaceIntersection> {
         let mut hit = None;
         let dist = f32::INFINITY;
         for prim in &self.scene.spheres {
@@ -66,27 +66,39 @@ impl Renderer {
         hit
     }
 
-    pub fn radiance(&self, ray: &Ray) -> Colour {
-        let hit = self.trace_ray(ray);
+    pub fn trace(&self, ray: &Ray, depth: i32) -> Colour {
+        let hit = self.intersect_ray(ray);
 
         if hit.is_none() {
             return Colour::black();
         }
+
         let i = hit.unwrap();
         let material = self.scene.get_material(i.material_id);
-        return material.base_colour
+        let mut c = Colour::black();
+        for light in &self.scene.lights {
+            let l = light.position - i.prim_i.p;
+            let l = normalize(&l);
+            let nl = l.dot(&i.prim_i.n);
+            //println!("i.prim_i = {:?}\n l = {:?}, nl = {:?}", i.prim_i, l, nl);
+            c = light.colour * material.base_colour * nl;
+        }
+        return c;
     }
 
     pub fn render(&mut self) {
         let camera_right = self.camera.forward.cross(&self.camera.up);
         for x in 0..self.w {
             for y in 0..self.h {
+                // if !(x == self.w/2 && y == self.h/2) {
+                //     continue;
+                // }
                 let (ss_x, ss_y) = self.screen_space_coord(x, y);
 
                 let camera_ray = self.camera.forward + ss_x*camera_right + ss_y*self.camera.up;
                 let ray = Ray { origin: self.camera.loc, dir: Unit::new_normalize(camera_ray) };
 
-                let c = self.radiance(&ray);
+                let c = self.trace(&ray, 0);
                 self.set_pixel(x, y, c);
             }
         }
