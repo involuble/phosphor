@@ -76,12 +76,21 @@ impl Renderer {
         let i = hit.unwrap();
         let material = self.scene.get_material(i.material_id);
         let mut c = Colour::black();
-        for light in &self.scene.lights {
-            let l = light.position - i.prim_i.p;
-            let l = normalize(&l);
-            let nl = l.dot(&i.prim_i.n);
-            //println!("i.prim_i = {:?}\n l = {:?}, nl = {:?}", i.prim_i, l, nl);
-            c = light.colour * material.base_colour * nl;
+        {
+            let light = &self.scene.lights[0];
+            let to_light = light.position - i.prim_i.p;
+            let d = to_light.norm();
+            let l = to_light / d;
+            // TODO: Do we ignore this light if dot(n,l) < 0?
+
+            // Offset the ray from the surface by a tiny bit or else it intersects
+            const EPSILON: f32 = 1e-4;
+            let shadow_ray = Ray::new(i.prim_i.p + l*EPSILON, Unit::new_unchecked(l));
+            let shadow_hit = self.intersect_ray(&shadow_ray);
+            if shadow_hit.is_none() || shadow_hit.unwrap().prim_i.d > d {
+                let nl = l.dot(&i.prim_i.n);
+                c = c + light.colour * material.base_colour * nl;
+            }
         }
         return c;
     }
@@ -96,7 +105,7 @@ impl Renderer {
                 let (ss_x, ss_y) = self.screen_space_coord(x, y);
 
                 let camera_ray = self.camera.forward + ss_x*camera_right + ss_y*self.camera.up;
-                let ray = Ray { origin: self.camera.loc, dir: Unit::new_normalize(camera_ray) };
+                let ray = Ray::new(self.camera.loc, Unit::new_normalize(camera_ray));
 
                 let c = self.trace(&ray, 0);
                 self.set_pixel(x, y, c);

@@ -22,7 +22,7 @@
             "taskName": "run",
             "command": "cargo",
             "args": [
-                "run"
+                "run", "--release"
             ],
                 "presentation": {
                 "reveal": "silent",

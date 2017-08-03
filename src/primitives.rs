@@ -9,6 +9,12 @@ pub struct Ray {
     pub dir: Unit<Vector3<f32>>,
 }
 
+impl Ray {
+    pub fn new(o: Point3<f32>, dir: Unit<Vector3<f32>>) -> Self {
+        Ray {origin: o, dir: dir }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Triangle {
     pub p1: Point3<f32>,
@@ -65,6 +71,7 @@ impl Surface for Sphere {
 pub struct PrimitiveIntersection {
     pub p: Point3<f32>,
     pub n: Vector3<f32>,
+    pub tang: Vector3<f32>,
     pub d: f32,
     pub u: f32,
     pub v: f32,
@@ -97,7 +104,9 @@ impl Primitive for Sphere {
         // TODO
         let u = 0.0;
         let v = 0.0;
-        Some(PrimitiveIntersection {p: p, n: n, d: dist, u: u, v: v})
+
+        let tang = Vector3::new(0.0, 0.0, 0.0);
+        Some(PrimitiveIntersection {p: p, n: n, tang: tang, d: dist, u: u, v: v})
     }
 }
 
@@ -134,7 +143,11 @@ impl Primitive for Triangle {
             return None;
         }
 
-        Some(PrimitiveIntersection {p: ray.origin + t*ray.dir.unwrap(), n: normalize(&e2.cross(&e1)), d: t, u: u, v: v})
+        let mut n = normalize(&e2.cross(&e1));
+        if dot(&n, ray.dir.as_ref()) > 0.0 {
+            n = -n;
+        }
+        Some(PrimitiveIntersection {p: ray.origin + t*ray.dir.unwrap(), n: n, tang: e1, d: t, u: u, v: v})
     }
 
     // fn intersect_prim(&self, ray: &Ray) -> Option<PrimitiveIntersection> {
