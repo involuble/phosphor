@@ -1,12 +1,12 @@
 use num_traits::{Float, Zero, clamp, NumCast};
-use std::ops::{Add, Mul, Div};
+use std::ops::{Add, Mul, Div, MulAssign, AddAssign};
 use approx::ApproxEq;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ColourBase<T> where T: Float {
+    pub r: T,
     pub g: T,
     pub b: T,
-    pub r: T,
 }
 
 #[allow(dead_code)]
@@ -60,6 +60,10 @@ impl<T> ColourBase<T> where T: Float {
 
     pub fn zero() -> Self {
         ColourBase { r: Zero::zero(), g: Zero::zero(), b: Zero::zero() }
+    }
+
+    pub fn is_black(&self) -> bool {
+        self.r == T::zero() && self.g == T::zero() && self.b == T::zero()
     }
 
     // TODO: move from_srgb & to_srgb into a trait
@@ -121,6 +125,18 @@ impl<T> Div<T> for ColourBase<T> where T: Float {
 
     fn div(self, rhs: T) -> Self::Output {
         ColourBase { r: self.r / rhs, g: self.g / rhs, b: self.b / rhs }
+    }
+}
+
+impl<T> MulAssign<ColourBase<T>> for ColourBase<T> where T: Float {
+    fn mul_assign(&mut self, rhs: ColourBase<T>) {
+        *self = *self * rhs;
+    }
+}
+
+impl<T> AddAssign<ColourBase<T>> for ColourBase<T> where T: Float {
+    fn add_assign(&mut self, rhs: ColourBase<T>) {
+        *self = *self + rhs;
     }
 }
 

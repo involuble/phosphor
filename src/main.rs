@@ -16,6 +16,7 @@ mod materials;
 mod triangle_list;
 mod camera;
 mod lights;
+mod samplers;
 
 use na::*;
 
@@ -26,6 +27,7 @@ use materials::*;
 use triangle_list::*;
 use camera::*;
 use lights::*;
+use samplers::*;
 
 // NOTE: Putting this here for reference
 // trait OrdDebug: Ord + Debug {}
@@ -42,6 +44,7 @@ fn main() {
     scene.add_material(Material::new(Colour::new(0.0, 1.0, 0.0)));
     scene.add_material(Material::new(Colour::from_luma(1.0)));
     scene.add_material(Material::new(Colour::from_luma(1.0)));
+    scene.add_material(Material::new_emitter(Colour::from_luma(1.0)));
 
     let back_wall: Box<[Triangle]> = Box::new([
         Triangle::new(
@@ -99,10 +102,10 @@ fn main() {
     ]);
     scene.add_triangle_list(TriangleList::from_vec(right_wall.into_vec(), 2));
 
-    scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 4));
+    scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 3));
     scene.add_sphere(Sphere::new(Point3::new(1.5, 1.0, 3.0), 0.9, 4));
 
-    scene.lights.push(PointLight::new(Colour::from_luma(1.0), Point3::new(0.0, 5.7, 3.0)));
+    scene.add_light(Sphere::new(Point3::new(0.0, 5.5, 3.0), 0.4, 5));
 
     let mut renderer = renderer::Renderer::build_renderer(scene, camera, 320, 240);
     renderer.render();

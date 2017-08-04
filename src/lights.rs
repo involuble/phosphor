@@ -1,7 +1,9 @@
 use na::*;
 
 use colour::*;
+use primitives::*;
 
+#[derive(Debug, Clone, Copy)]
 pub struct PointLight {
     pub colour: Colour,
     pub position: Point3<f32>,
@@ -16,4 +18,10 @@ impl PointLight {
             scale: 1.0,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SphereLight {
+    pub sphere: Sphere,
+    pub emittance: Colour,
 }

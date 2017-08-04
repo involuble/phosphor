@@ -12,6 +12,10 @@ impl Material {
         Material { id: 0, base_colour: colour, emittance: Colour::zero() }
     }
 
+    pub fn new_emitter(e: Colour) -> Self {
+        Material { id: 0, base_colour: e, emittance: e }
+    }
+
     pub fn set_id(&mut self, new_id: u32) {
         self.id = new_id;
     }
