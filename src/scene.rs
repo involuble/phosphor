@@ -49,7 +49,7 @@ impl Scene {
 
     pub fn add_light(&mut self, light: Sphere) {
         let e = self.get_material(light.material_id).emittance;
-        debug_assert!(!e.is_black());
+        assert!(!e.is_black());
         self.lights.push(SphereLight { sphere: light, emittance: e });
         self.spheres.push(light);
     }

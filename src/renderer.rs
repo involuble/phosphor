@@ -136,7 +136,7 @@ impl Renderer {
             let bytes = self.img[i].into_u8_rgb();
             buf.extend_from_slice(&bytes);
         }
-        debug_assert!(buf.len() == buf.capacity());
+        assert!(buf.len() == buf.capacity());
         buf.into_boxed_slice()
     }
 }

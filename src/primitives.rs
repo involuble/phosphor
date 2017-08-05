@@ -69,12 +69,14 @@ impl Surface for Sphere {
 
 #[derive(Debug, Clone, Copy)]
 pub struct PrimitiveIntersection {
+// pub struct PrimitiveIntersection<'a, T: 'a> {
     pub p: Point3<f32>,
+    pub d: f32,
     pub n: Vector3<f32>,
     pub tang: Vector3<f32>,
-    pub d: f32,
     pub u: f32,
     pub v: f32,
+    // pub geom: &'a T,
 }
 
 pub trait Primitive {
@@ -101,12 +103,8 @@ impl Primitive for Sphere {
         let p = ray.origin + ray.dir.unwrap() * dist;
         let n = (p - self.center)/self.radius;
 
-        // TODO
-        let u = 0.0;
-        let v = 0.0;
-
         let tang = Vector3::new(0.0, 0.0, 0.0);
-        Some(PrimitiveIntersection {p: p, n: n, tang: tang, d: dist, u: u, v: v})
+        Some(PrimitiveIntersection { p: p, d: dist, n: n, tang: tang, u: 0.0, v: 0.0 })
     }
 }
 
@@ -116,7 +114,6 @@ impl Primitive for Triangle {
     fn intersect_prim(&self, ray: &Ray) -> Option<PrimitiveIntersection> {
         let e1 = self.p2 - self.p1;
         let e2 = self.p3 - self.p1;
-
         let pvec = ray.dir.cross(&e2);
         let det = dot(&e1, &pvec);
 
@@ -147,43 +144,6 @@ impl Primitive for Triangle {
         if dot(&n, ray.dir.as_ref()) > 0.0 {
             n = -n;
         }
-        Some(PrimitiveIntersection {p: ray.origin + t*ray.dir.unwrap(), n: n, tang: e1, d: t, u: u, v: v})
+        Some(PrimitiveIntersection {p: ray.origin + t*ray.dir.unwrap(), d: t, n: n, tang: e1, u: u, v: v})
     }
-
-    // fn intersect_prim(&self, ray: &Ray) -> Option<PrimitiveIntersection> {
-    //     let p = self.p1;
-    //     let u = self.p2 - self.p1;
-    //     let v = self.p3 - self.p1;
-
-    //     let n = normalize(&u.cross(&v));
-    //     let b = dot(&n, ray.dir.as_ref());
-
-    //     let to_ray_origin = ray.origin - p;
-    //     // distance to the plane that the triangle lies on
-    //     let dist = dot(&n, &to_ray_origin) / -b;
-
-    //     if relative_eq!(b, 0.0) || dist < f32::EPSILON {
-    //         return None;
-    //     }
-
-    //     // Intersection of the ray and the plane the triangle lies on (relative to the triangle center)
-    //     let w = to_ray_origin + ray.dir.unwrap() * dist;
-
-    //     let uu = dot(&u, &u);
-    //     let vv = dot(&v, &v);
-    //     let uv = dot(&u, &v);
-    //     let wv = dot(&w, &v);
-    //     let wu = dot(&w, &u);
-
-    //     let inv_den = 1.0 / (uv*uv - uu*vv);
-    //     // Barycentric coordinates of w
-    //     let s = (uv*wv - vv*wu) * inv_den;
-    //     let t = (uv*wu - uu*wv) * inv_den;
-
-    //     if s < 0.0 || t < 0.0 || (s+t) > 1.0 {
-    //         return None;
-    //     }
-
-    //     Some(PrimitiveIntersection {p: Point3::from_coordinates(w), n: n, d: dist, u: s, v: t})
-    // }
 }
