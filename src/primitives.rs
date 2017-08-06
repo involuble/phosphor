@@ -3,6 +3,8 @@ use std::f32;
 
 // type UnitVector3<T> = Unit<Vector3<T>>;
 
+pub const EPSILON: f32 = 1e-5;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {
     pub origin: Point3<f32>,
@@ -96,8 +98,8 @@ impl Primitive for Sphere {
         let s1 = adj + sdet;
         let s2 = adj - sdet;
         let dist;
-        if s2 < s1 && s2 > f32::EPSILON { dist = s2; }
-        else if s1 > f32::EPSILON { dist = s1; }
+        if s2 < s1 && s2 > EPSILON { dist = s2; }
+        else if s1 > EPSILON { dist = s1; }
         else { return None; }
 
         let p = ray.origin + ray.dir.unwrap() * dist;
@@ -114,10 +116,11 @@ impl Primitive for Triangle {
     fn intersect_prim(&self, ray: &Ray) -> Option<PrimitiveIntersection> {
         let e1 = self.p2 - self.p1;
         let e2 = self.p3 - self.p1;
+        
         let pvec = ray.dir.cross(&e2);
         let det = dot(&e1, &pvec);
 
-        if relative_eq!(det, 0.0) {
+        if relative_eq!(det, 0.0, epsilon=EPSILON) {
             return None;
         }
 

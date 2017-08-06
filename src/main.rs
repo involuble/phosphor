@@ -27,7 +27,6 @@ use materials::*;
 use triangle_list::*;
 use camera::*;
 use lights::*;
-use samplers::*;
 
 // NOTE: Putting this here for reference
 // trait OrdDebug: Ord + Debug {}
@@ -102,10 +101,10 @@ fn main() {
     ]);
     scene.add_triangle_list(TriangleList::from_vec(right_wall.into_vec(), 2));
 
-    scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.0), 0.9, 3));
-    scene.add_sphere(Sphere::new(Point3::new(1.5, 1.0, 3.0), 0.9, 4));
+    scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 4.1), 0.9, 3));
+    scene.add_sphere(Sphere::new(Point3::new(1.5, 1.0, 4.0), 0.9, 4));
 
-    scene.add_light(Sphere::new(Point3::new(0.0, 5.5, 3.0), 0.4, 5));
+    scene.add_light(Sphere::new(Point3::new(0.0, 5.5, 2.0), 0.4, 5));
 
     let mut renderer = renderer::Renderer::build_renderer(scene, camera, 320, 240);
     renderer.render();

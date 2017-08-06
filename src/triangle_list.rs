@@ -30,7 +30,8 @@ impl Surface for TriangleList {
         let mut hit = None;
         for tri in &self.triangles {
             let new_hit = tri.intersect_prim(&ray);
-            if f(&new_hit) < f(&hit) {
+            let d = f(&new_hit);
+            if d < f(&hit) && d > EPSILON {
                 hit = new_hit;
             }
         }
