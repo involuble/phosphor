@@ -91,11 +91,32 @@ impl Renderer {
             let i = hit.unwrap();
             let material = self.scene.get_material(i.material_id);
 
-            acc_c += refl * material.emittance;
+            if depth == 0 {
+                acc_c += refl * material.emittance;
+            }
             // println!("d = {}, acc_c = {:?}", depth, acc_c);
             refl *= material.base_colour;
 
-            // Diffuse lighting
+            // Next event estimation/direct light sampling
+            {
+                let light = &self.scene.lights[0];
+                let to_light = light.sphere.center - i.prim_i.p;
+                let l_norm = to_light.norm();
+                let l = to_light / l_norm;
+                let light_dist = l_norm - light.sphere.radius;
+                let nl = l.dot(&i.prim_i.n);
+
+                if nl > 0.0 {
+                    // Offset the ray from the surface by a tiny bit or else it intersects
+                    let shadow_ray = Ray::new(i.prim_i.p, Unit::new_unchecked(l));
+                    let shadow_hit = self.intersect_ray(&shadow_ray);
+                    if shadow_hit.is_none() || shadow_hit.unwrap().prim_i.d >= light_dist - EPSILON {
+                        acc_c += refl * light.emittance * nl;
+                    }
+                }
+            }
+
+            // Choose new ray direction
             let bitangent = i.prim_i.tang.cross(&i.prim_i.n);
             let sampler = CosineHemisphereSampler {};
             let r = sampler.sample(rng);
@@ -103,21 +124,9 @@ impl Renderer {
             let d = r.x * i.prim_i.tang + r.y * bitangent + r.z * i.prim_i.n;
             let d = d.normalize();
 
-            let light = &self.scene.lights[0];
-            let to_light = light.sphere.center - i.prim_i.p;
-            let light_dist = to_light.norm();
-            let l = to_light / light_dist;
-            let light_dist = light_dist - light.sphere.radius;
-            let nl = l.dot(&i.prim_i.n);
+            // Evaluate brdf
+            refl *= dot(&d, &i.prim_i.n);
 
-            if nl > 0.0 {
-                // Offset the ray from the surface by a tiny bit or else it intersects
-                let shadow_ray = Ray::new(i.prim_i.p, Unit::new_unchecked(l));
-                let shadow_hit = self.intersect_ray(&shadow_ray);
-                if shadow_hit.is_none() || shadow_hit.unwrap().prim_i.d >= light_dist - EPSILON {
-                    acc_c += refl * light.emittance * nl / PI;
-                }
-            }
             ray = Ray::new(i.prim_i.p, Unit::new_unchecked(d));
         }
         acc_c
@@ -142,7 +151,7 @@ impl Renderer {
                     let (ss_x, ss_y) = self.screen_space_coord(xf+r1, yf+r2);
                     let camera_ray = self.camera.forward + ss_x*camera_right + ss_y*self.camera.up;
                     let ray = Ray::new(self.camera.loc, Unit::new_normalize(camera_ray));
-                    c += self.trace(&ray, &mut rng, 3);
+                    c += self.trace(&ray, &mut rng, 2);
                 }
                 c = c / (spp as f32);
                 self.set_pixel(x, y, c);

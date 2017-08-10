@@ -26,7 +26,6 @@ use colour::*;
 use materials::*;
 use triangle_list::*;
 use camera::*;
-use lights::*;
 
 // NOTE: Putting this here for reference
 // trait OrdDebug: Ord + Debug {}

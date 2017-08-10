@@ -134,6 +134,12 @@ impl<T> MulAssign<ColourBase<T>> for ColourBase<T> where T: Float {
     }
 }
 
+impl<T> MulAssign<T> for ColourBase<T> where T: Float {
+    fn mul_assign(&mut self, rhs: T) {
+        *self = *self * rhs;
+    }
+}
+
 impl<T> AddAssign<ColourBase<T>> for ColourBase<T> where T: Float {
     fn add_assign(&mut self, rhs: ColourBase<T>) {
         *self = *self + rhs;
