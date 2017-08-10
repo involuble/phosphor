@@ -51,26 +51,26 @@ impl Renderer {
         (ss_x, ss_y)
     }
 
-    pub fn intersect_ray(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+    pub fn intersect_ray(&self, ray: &Ray) -> Option<Intersection> {
         let mut hit = None;
         let mut dist = f32::INFINITY;
         for prim in &self.scene.spheres {
             let new_hit = prim.intersect(&ray);
-            let new_dist = SurfaceIntersection::get_dist(&new_hit);
+            let new_dist = Intersection::get_dist(&new_hit);
             if new_dist < dist && new_dist > EPSILON {
                 hit = new_hit;
                 dist = new_dist;
             }
         }
-        for prim in &self.scene.tri_lists {
+        for prim in &self.scene.meshes {
             let new_hit = prim.intersect(&ray);
-            let new_dist = SurfaceIntersection::get_dist(&new_hit);
+            let new_dist = Intersection::get_dist(&new_hit);
             if new_dist < dist && new_dist > EPSILON {
                 hit = new_hit;
                 dist = new_dist;
             }
         }
-        assert!(hit.is_none() || hit.unwrap().prim_i.d > 1e-7, "Probable self intersection: ray = {:?}\n intersection = {:?}", ray, hit.unwrap());
+        assert!(hit.is_none() || hit.unwrap().t > 1e-7, "Probable self intersection: ray = {:?}\n intersection = {:?}", ray, hit.unwrap());
         hit
     }
 
@@ -89,45 +89,45 @@ impl Renderer {
             }
 
             let i = hit.unwrap();
-            let material = self.scene.get_material(i.material_id);
+            let surface_info = self.scene.get_surface_info(i.geom_id, &i);
+            // println!("      DEPTH = {}\nsurface_info = {:?}\nintersection = {:?}\n", depth, surface_info, i);
 
             if depth == 0 {
-                acc_c += refl * material.emittance;
+                acc_c += refl * surface_info.material.emittance;
             }
-            // println!("d = {}, acc_c = {:?}", depth, acc_c);
-            refl *= material.base_colour;
+            refl *= surface_info.material.base_colour;
 
             // Next event estimation/direct light sampling
             {
                 let light = &self.scene.lights[0];
-                let to_light = light.sphere.center - i.prim_i.p;
+                let to_light = light.center - i.p;
                 let l_norm = to_light.norm();
                 let l = to_light / l_norm;
-                let light_dist = l_norm - light.sphere.radius;
-                let nl = l.dot(&i.prim_i.n);
+                let light_dist = l_norm - light.radius;
+                let nl = l.dot(&i.n);
 
                 if nl > 0.0 {
                     // Offset the ray from the surface by a tiny bit or else it intersects
-                    let shadow_ray = Ray::new(i.prim_i.p, Unit::new_unchecked(l));
+                    let shadow_ray = Ray::new(i.p, Unit::new_unchecked(l));
                     let shadow_hit = self.intersect_ray(&shadow_ray);
-                    if shadow_hit.is_none() || shadow_hit.unwrap().prim_i.d >= light_dist - EPSILON {
-                        acc_c += refl * light.emittance * nl;
+                    if shadow_hit.is_none() || shadow_hit.unwrap().t >= light_dist - EPSILON {
+                        acc_c += refl * light.material.emittance * nl;
                     }
                 }
             }
 
             // Choose new ray direction
-            let bitangent = i.prim_i.tang.cross(&i.prim_i.n);
+            let (tang, bitangent) = orthonormal_basis(i.n);
             let sampler = CosineHemisphereSampler {};
             let r = sampler.sample(rng);
 
-            let d = r.x * i.prim_i.tang + r.y * bitangent + r.z * i.prim_i.n;
+            let d = r.x * tang + r.y * bitangent + r.z * i.n;
             let d = d.normalize();
 
             // Evaluate brdf
-            refl *= dot(&d, &i.prim_i.n);
+            refl *= dot(&d, &i.n);
 
-            ray = Ray::new(i.prim_i.p, Unit::new_unchecked(d));
+            ray = Ray::new(i.p, Unit::new_unchecked(d));
         }
         acc_c
     }
@@ -135,23 +135,26 @@ impl Renderer {
     pub fn render(&mut self) {
         let spp: u32 = 16;
         assert!(spp > 0);
+        assert!(self.scene.lights.len() > 0);
         let camera_right = self.camera.forward.cross(&self.camera.up);
+        // println!("SCENE TRIANGLES:\n\n{:?}\n\n", self.scene.meshes);
         for x in 0..self.w {
             for y in 0..self.h {
                 // if !(x == 160 && y == 70) { continue; } // The light
                 // if !(x == 140 && y == 140) { continue; } // The left sphere
+                // if !(x == 100 && y == 100) { continue; } // The left wall (red one)
                 let mut rng = thread_rng();
-                let xf = x as f32;
-                let yf = y as f32;
+                let x_f = x as f32;
+                let y_f = y as f32;
 
                 let mut c = Colour::black();
                 for _ in 0..spp {
                     let r1 = rng.next_f32();
                     let r2 = rng.next_f32();
-                    let (ss_x, ss_y) = self.screen_space_coord(xf+r1, yf+r2);
+                    let (ss_x, ss_y) = self.screen_space_coord(x_f+r1, y_f+r2);
                     let camera_ray = self.camera.forward + ss_x*camera_right + ss_y*self.camera.up;
                     let ray = Ray::new(self.camera.loc, Unit::new_normalize(camera_ray));
-                    c += self.trace(&ray, &mut rng, 2);
+                    c += self.trace(&ray, &mut rng, 3);
                 }
                 c = c / (spp as f32);
                 self.set_pixel(x, y, c);

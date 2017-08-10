@@ -1,12 +1,26 @@
 use na::*;
+use std::f32;
 use std::f32::consts::PI;
 use std::default::{Default};
 use rand;
 
+// Creates an orthonormal basis given a normal vector.
+//   The vectors are returned in a tuple as tangent and bitangent
+// Reference: http://jcgt.org/published/0006/01/01/paper.pdf
+//   (same paper) http://graphics.pixar.com/library/OrthonormalB/paper.pdf 
+pub fn orthonormal_basis(n: Vector3<f32>) -> (Vector3<f32>, Vector3<f32>) {
+    let sign = n.z.signum();
+    let a = -1.0 / (sign + n.z);
+    let b = n.x * n.y * a;
+    let b1 = Vector3::new(1.0 + sign*n.x*n.x*a, sign*b, -sign*n.x);
+    let b2 = Vector3::new(b, sign + n.y*n.y*a, -n.y);
+    (b1, b2)
+}
+
 pub struct CosineHemisphereSampler;
 
 impl CosineHemisphereSampler {
-    // See http://www.rorydriscoll.com/2009/01/07/better-sampling/
+    // Reference: http://www.rorydriscoll.com/2009/01/07/better-sampling/
     pub fn sample<R: rand::Rng>(&self, rng: &mut R) -> Vector3<f32> {
         let u1 = rng.next_f32();
         let u2 = rng.next_f32();
@@ -24,7 +38,7 @@ impl CosineHemisphereSampler {
 pub struct UniformHemisphereSampler;
 
 impl UniformHemisphereSampler {
-    // See http://www.rorydriscoll.com/2009/01/07/better-sampling/
+    // Reference: http://www.rorydriscoll.com/2009/01/07/better-sampling/
     pub fn sample<R: rand::Rng>(&self, rng: &mut R) -> Vector3<f32> {
         let u1 = rng.next_f32();
         let u2 = rng.next_f32();
@@ -50,14 +64,18 @@ impl Default for AdditiveRecurrence {
 }
 
 impl AdditiveRecurrence {
-    pub fn with_seed(seed: f32) -> Self {
+    pub fn seed(seed: f32) -> Self {
         AdditiveRecurrence { f: seed }
     }
 
-    pub fn sample<R: rand::Rng>(&mut self, rng: &mut R) -> f32 {
+    pub fn generate(&mut self) -> f32 {
         const BASE: f32 = 1.61803398875;
         let r = self.f;
         self.f = (self.f + BASE) % 1.0;
         r
     }
 }
+
+// TODO:
+// Reference: http://web.maths.unsw.edu.au/~fkuo/sobol/
+pub struct SobolSequence;

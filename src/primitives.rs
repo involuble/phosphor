@@ -1,9 +1,9 @@
 use na::*;
 use std::f32;
 
-// type UnitVector3<T> = Unit<Vector3<T>>;
-
 pub const EPSILON: f32 = 1e-5;
+
+pub const INVALID_GEOM_ID: u32 = !0;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {
@@ -31,63 +31,48 @@ impl Triangle {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Sphere {
+pub struct SpherePrimitive {
     pub center: Point3<f32>,
     pub radius: f32,
-    pub material_id: u32,
 }
 
-impl Sphere {
-    pub fn new(c: Point3<f32>, r: f32, mat: u32) -> Self {
-        Sphere { center: c, radius: r, material_id: mat }
+impl SpherePrimitive {
+    pub fn new(c: Point3<f32>, r: f32) -> Self {
+        SpherePrimitive { center: c, radius: r }
     }
 }
+
+// Note: The lifetime declarations if a reference to the primitive is desired instead of an id
+// pub struct Intersection<'a, T: 'a> {
+//     pub prim: &'a T,
 
 #[derive(Debug, Clone, Copy)]
-pub struct SurfaceIntersection {
-    pub prim_i: PrimitiveIntersection,
-    pub material_id: u32,
-}
-
-impl SurfaceIntersection {
-    pub fn get_dist(o: &Option<SurfaceIntersection>) -> f32 {
-        o.map_or(f32::INFINITY, |i| i.prim_i.d)
-    }
-}
-
-pub trait Surface {
-    fn intersect(&self, ray: &Ray) -> Option<SurfaceIntersection>;
-}
-
-impl Surface for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<SurfaceIntersection> {
-        let i = self.intersect_prim(ray);
-        if let Some(prim_i) = i {
-            return Some(SurfaceIntersection {prim_i: prim_i, material_id: self.material_id});
-        }
-        None
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct PrimitiveIntersection {
-// pub struct PrimitiveIntersection<'a, T: 'a> {
+pub struct Intersection {
     pub p: Point3<f32>,
-    pub d: f32,
+    pub t: f32,
+    // The geometric normal (normalized)
     pub n: Vector3<f32>,
-    pub tang: Vector3<f32>,
     pub u: f32,
     pub v: f32,
-    // pub geom: &'a T,
+    // pub prim_id: u32,
+    pub geom_id: u32,
 }
 
-pub trait Primitive {
-    fn intersect_prim(&self, ray: &Ray) -> Option<PrimitiveIntersection>;
+impl Intersection {
+    pub fn get_dist(o: &Option<Intersection>) -> f32 {
+        o.map_or(f32::INFINITY, |i| i.t)
+    }
+
+    // pub fn closest(a: &Option<Intersection>, b: &Option<Intersection>) -> Option<Intersection>;
 }
 
-impl Primitive for Sphere {
+pub trait Intersectable {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection>;
+}
+
+impl Intersectable for SpherePrimitive {
     // See https://en.wikipedia.org/wiki/Line-sphere_intersection
-    fn intersect_prim(&self, ray: &Ray) -> Option<PrimitiveIntersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let a = self.center - ray.origin;
         let adj = dot(&a, ray.dir.as_ref());
         let det = adj*adj - dot(&a,&a) + self.radius*self.radius;
@@ -105,15 +90,14 @@ impl Primitive for Sphere {
         let p = ray.origin + ray.dir.unwrap() * dist;
         let n = (p - self.center)/self.radius;
 
-        let tang = Vector3::new(0.0, 0.0, 0.0);
-        Some(PrimitiveIntersection { p: p, d: dist, n: n, tang: tang, u: 0.0, v: 0.0 })
+        Some(Intersection { p: p, t: dist, n: n, u: 0.0, v: 0.0, geom_id: INVALID_GEOM_ID })
     }
 }
 
-impl Primitive for Triangle {
+impl Intersectable for Triangle {
     // http://www.graphics.cornell.edu/pubs/1997/MT97.html
     // TODO: See also http://jcgt.org/published/0002/01/05/paper.pdf for watertight intersections
-    fn intersect_prim(&self, ray: &Ray) -> Option<PrimitiveIntersection> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let e1 = self.p2 - self.p1;
         let e2 = self.p3 - self.p1;
         
@@ -147,6 +131,6 @@ impl Primitive for Triangle {
         if dot(&n, ray.dir.as_ref()) > 0.0 {
             n = -n;
         }
-        Some(PrimitiveIntersection {p: ray.origin + t*ray.dir.unwrap(), d: t, n: n, tang: e1, u: u, v: v})
+        Some(Intersection {p: ray.origin + t*ray.dir.unwrap(), t: t, n: n, u: u, v: v, geom_id: INVALID_GEOM_ID })
     }
 }

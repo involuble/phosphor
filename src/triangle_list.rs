@@ -2,45 +2,31 @@ use std::f32;
 
 use primitives::*;
 
+#[derive(Debug)]
 pub struct TriangleList {
     pub triangles: Vec<Triangle>,
-    pub material_id: u32,
 }
 
 impl TriangleList {
-    #[allow(dead_code)]
-    pub fn new(mat: u32) -> Self {
-        TriangleList {
-            triangles: Vec::new(),
-            material_id: mat,
-        }
-    }
-
-    pub fn from_vec(tris: Vec<Triangle>, mat: u32) -> Self {
+    pub fn from_vec(tris: Vec<Triangle>) -> Self {
         TriangleList {
             triangles: tris,
-            material_id: mat,
         }
     }
 }
 
-impl Surface for TriangleList {
-    fn intersect(&self, ray: &Ray) -> Option<SurfaceIntersection> {
-        let f = |o: &Option<PrimitiveIntersection>| o.map_or(f32::INFINITY, |i| i.d);
+impl Intersectable for TriangleList {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let mut hit = None;
+        let mut dist = f32::INFINITY;
         for tri in &self.triangles {
-            let new_hit = tri.intersect_prim(&ray);
-            let d = f(&new_hit);
-            if d < f(&hit) && d > EPSILON {
+            let new_hit = tri.intersect(&ray);
+            let new_dist = Intersection::get_dist(&new_hit);
+            if new_dist < dist && new_dist > EPSILON {
                 hit = new_hit;
+                dist = new_dist;
             }
         }
-        match hit {
-            Some(prim_i) => Some(SurfaceIntersection {
-                prim_i: prim_i,
-                material_id: self.material_id,
-            }),
-            None => None,
-        }
+        hit
     }
 }

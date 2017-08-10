@@ -1,59 +1,53 @@
 use colour::*;
 use primitives::*;
 use materials::*;
-use triangle_list::*;
-use lights::*;
+use surface::*;
+use mesh::*;
 
 pub struct Scene {
-    pub tri_lists: Vec<TriangleList>,
+    pub meshes: Vec<Mesh>,
     pub spheres: Vec<Sphere>,
-    pub lights: Vec<SphereLight>,
+    pub lights: Vec<Sphere>,
     pub background: Colour,
-    // TODO: Keep using material IDs or switch to references?
-    materials: Vec<Material>,
 }
 
 impl Scene {
     pub fn new() -> Self {
         Scene {
-            tri_lists: Vec::new(),
+            meshes: Vec::new(),
             spheres: Vec::new(),
             lights: Vec::new(),
             background: Colour::black(),
-            materials: Vec::new(),
         }
     }
 
-    pub fn add_sphere(&mut self, sphere: Sphere) {
-        assert!(
-            self.materials.len() as u32 > sphere.material_id,
-            "Invalid material ID"
-        );
+    pub fn add_sphere(&mut self, mut sphere: Sphere) {
+        sphere.geom_id = (self.spheres.len() + 200) as u32;
         self.spheres.push(sphere);
     }
 
-    pub fn add_triangle_list(&mut self, list: TriangleList) {
-        assert!(
-            self.materials.len() as u32 > list.material_id,
-            "Invalid material ID"
-        );
-        self.tri_lists.push(list);
+    pub fn add_mesh(&mut self, list: Vec<Triangle>, mat: Material) {
+        let mut mesh = Mesh::new(list, mat);
+        mesh.geom_id = self.meshes.len() as u32;
+        self.meshes.push(mesh);
     }
 
-    pub fn add_material(&mut self, mut material: Material) {
-        let idx = self.materials.len();
-        material.set_id(idx as u32);
-        self.materials.push(material);
+    pub fn get_surface_info(&self, geom_id: u32, i: &Intersection) -> SurfaceInfo {
+        if geom_id >= 200 {
+            let s = &self.spheres[(geom_id - 200) as usize];
+            s.get_surface_info(i)
+        } else {
+            let m = &self.meshes[geom_id as usize];
+            m.get_surface_info(i)
+        }
     }
 
-    pub fn get_material(&self, id: u32) -> &Material {
-        &self.materials[id as usize]
-    }
-
-    pub fn add_light(&mut self, light: Sphere) {
-        let e = self.get_material(light.material_id).emittance;
+    pub fn add_light(&mut self, mut light: Sphere) {
+        let e = light.material.emittance;
         assert!(!e.is_black());
-        self.lights.push(SphereLight { sphere: light, emittance: e });
+        let id = self.spheres.len() as u32 + 200;
+        light.geom_id = id;
+        self.lights.push(light);
         self.spheres.push(light);
     }
 }
