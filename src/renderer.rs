@@ -73,6 +73,10 @@ impl Renderer {
     }
 
     pub fn direct_light_estimate<R: Rng>(&self, rng: &mut R, i: &Intersection, surface_info: &SurfaceInfo) -> Colour {
+        if self.scene.lights.len() == 0 {
+            return Colour::black();
+        }
+
         let light = &self.scene.lights[0];
 
         if i.geom_id == light.geom_id {
@@ -131,8 +135,9 @@ impl Renderer {
             let wi = wi.normalize();
 
             // Evaluate brdf
-            assert_relative_ne!(pdf, 0.0);
-            refl *= surface_info.material.base_colour * dot(&wi, &i.n);
+            if pdf > EPSILON {
+                refl *= surface_info.material.base_colour * dot(&wi, &i.n) / PI / pdf;
+            }
 
             ray = Ray::new(i.p, Unit::new_unchecked(wi));
         }
@@ -142,7 +147,6 @@ impl Renderer {
     pub fn render(&mut self) {
         let spp: u32 = 16;
         assert!(spp > 0);
-        assert!(self.scene.lights.len() > 0);
         let camera_right = self.camera.forward.cross(&self.camera.up);
         // println!("SCENE TRIANGLES:\n\n{:?}\n\n", self.scene.meshes);
         for x in 0..self.w {

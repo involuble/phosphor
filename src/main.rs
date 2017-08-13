@@ -70,6 +70,12 @@ fn main() {
 
     scene.add_light(Sphere::new(Point3::new(0.0, 5.5, 2.0), 0.4, Material::new_emitter(Colour::from_luma(1.0))));
 
+    let mut furnace_scene = Scene::new();
+    let furnace_c = Colour::from_luma(0.18); // = 118 after sRGB encoding
+    furnace_scene.add_sphere(Sphere::new(Point3::new(0.0, 3.0, 1.0), 2.0, Material::new(furnace_c)));
+    // println!("Linear colour {} to sRGB = {}", furnace_c.r, furnace_c.into_u8_rgb()[0]); // 0.18 & 118
+    furnace_scene.background = Colour::from_luma(1.0);
+
     let mut renderer = Renderer::build_renderer(scene, camera, 320, 240);
     renderer.render();
 

@@ -2,7 +2,7 @@
 
 use na::*;
 use std::f32;
-use std::f32::consts::PI;
+use std::f32::consts::{PI, FRAC_1_PI};
 use std::default::{Default};
 use rand;
 
@@ -20,7 +20,8 @@ impl CosineHemisphereSampler {
         let c_t = theta.cos();
         let s_t = theta.sin();
 
-        (Vector3::new(r * c_t, r * s_t, (1.0 - u1).sqrt()), 1.0 / (c_t * PI))
+        let z = (1.0 - u1).sqrt();
+        (Vector3::new(r * c_t, r * s_t, z), z * FRAC_1_PI)
     }
 }
 
@@ -37,7 +38,7 @@ impl UniformHemisphereSampler {
         let x = r * phi.cos();
         let y = r * phi.sin();
 
-        (Vector3::new(x, y, u1), 1.0 / (2.0 * PI))
+        (Vector3::new(x, y, u1), 0.5 * FRAC_1_PI)
     }
 }
 
