@@ -7,7 +7,9 @@ use primitives::*;
 use scene::*;
 use colour::*;
 use camera::*;
-use samplers::*;
+use sampling::*;
+use surface::*;
+use linalg::*;
 
 pub struct Renderer {
     pub scene: Scene,
@@ -42,12 +44,8 @@ impl Renderer {
             aspect_ratio_y = self.h as f32 / self.w as f32;
         }
         let fov_scale = (self.camera.fov / 2.0).tan();
-        let ss_x = x / self.w as f32;
-        let ss_x = ss_x * 2. - 1.;
-        let ss_x = aspect_ratio_x * fov_scale * ss_x;
-        let ss_y = y / self.h as f32;
-        let ss_y = 1. - ss_y * 2.0;
-        let ss_y = aspect_ratio_y * fov_scale * ss_y;
+        let ss_x = aspect_ratio_x * fov_scale * ((x / self.w as f32) * 2.0 - 1.0);
+        let ss_y = aspect_ratio_y * fov_scale * (1.0 - (y / self.h as f32) * 2.0);
         (ss_x, ss_y)
     }
 
@@ -74,6 +72,32 @@ impl Renderer {
         hit
     }
 
+    pub fn direct_light_estimate<R: Rng>(&self, rng: &mut R, i: &Intersection, surface_info: &SurfaceInfo) -> Colour {
+        let light = &self.scene.lights[0];
+
+        if i.geom_id == light.geom_id {
+            return Colour::black();
+        }
+
+        let (l, pdf) = light.sample_vec(rng, i.p);
+        let nl = l.dot(&i.n);
+
+        let mut c = Colour::black();
+        if nl > 0.0 {
+            // Offset the ray from the surface by a tiny bit or else it intersects
+            let light_ray = Ray::new(i.p, Unit::new_unchecked(l));
+            let light_hit = self.intersect_ray(&light_ray);
+            // This triggers around 2-6 times per frame which is a non-issue but requires leaving it commented
+            // assert!(light_hit.is_some(), "A vector aimed at an object should either hit it or something else");
+            if light_hit.is_some() && light_hit.unwrap().geom_id == light.geom_id {
+                let _ = light_hit.unwrap();
+                // TODO: Evaluate BRDF
+                c += surface_info.material.base_colour * light.material.emittance * nl / pdf;
+            }
+        }
+        c
+    }
+
     pub fn trace<R: Rng>(&self, camera_ray: &Ray, rng: &mut R, max_depth: u32) -> Colour {
         let mut ray = *camera_ray;
         let mut acc_c = Colour::zero();
@@ -95,39 +119,22 @@ impl Renderer {
             if depth == 0 {
                 acc_c += refl * surface_info.material.emittance;
             }
-            refl *= surface_info.material.base_colour;
 
             // Next event estimation/direct light sampling
-            {
-                let light = &self.scene.lights[0];
-                let to_light = light.center - i.p;
-                let l_norm = to_light.norm();
-                let l = to_light / l_norm;
-                let light_dist = l_norm - light.radius;
-                let nl = l.dot(&i.n);
-
-                if nl > 0.0 {
-                    // Offset the ray from the surface by a tiny bit or else it intersects
-                    let shadow_ray = Ray::new(i.p, Unit::new_unchecked(l));
-                    let shadow_hit = self.intersect_ray(&shadow_ray);
-                    if shadow_hit.is_none() || shadow_hit.unwrap().t >= light_dist - EPSILON {
-                        acc_c += refl * light.material.emittance * nl;
-                    }
-                }
-            }
+            acc_c += refl * self.direct_light_estimate(rng, &i, &surface_info);
 
             // Choose new ray direction
             let (tang, bitangent) = orthonormal_basis(i.n);
-            let sampler = CosineHemisphereSampler {};
-            let r = sampler.sample(rng);
+            let (r, pdf) = CosineHemisphereSampler::sample(rng);
 
-            let d = r.x * tang + r.y * bitangent + r.z * i.n;
-            let d = d.normalize();
+            let wi = r.x * tang + r.y * bitangent + r.z * i.n;
+            let wi = wi.normalize();
 
             // Evaluate brdf
-            refl *= dot(&d, &i.n);
+            assert_relative_ne!(pdf, 0.0);
+            refl *= surface_info.material.base_colour * dot(&wi, &i.n);
 
-            ray = Ray::new(i.p, Unit::new_unchecked(d));
+            ray = Ray::new(i.p, Unit::new_unchecked(wi));
         }
         acc_c
     }

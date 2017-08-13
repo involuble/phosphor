@@ -16,9 +16,10 @@ mod materials;
 mod triangle_list;
 mod camera;
 mod lights;
-mod samplers;
+mod sampling;
 mod surface;
 mod mesh;
+mod linalg;
 
 use na::*;
 
