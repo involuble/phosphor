@@ -2,7 +2,7 @@ use na::*;
 use rand;
 
 use primitives::*;
-use materials::*;
+use material::*;
 use sampling::*;
 use linalg::*;
 
@@ -46,8 +46,8 @@ impl Sphere {
     //     let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
     //     let phi = 2.0 * PI * u2;
 
-    //     let to = self.center - p;
-    //     let (cone_x, cone_y) = orthonormal_basis(to.normalize());
+    //     let to = (self.center - p).normalize();
+    //     let (cone_x, cone_y) = orthonormal_basis(to);
 
     //     let d = v.x * cone_x + v.y * cone_y + v.z * to;
     //     (d, 1.0 / (2.0 * PI * (1.0 - cos_theta_max))

@@ -95,7 +95,8 @@ impl Intersectable for SpherePrimitive {
 }
 
 impl Intersectable for Triangle {
-    // http://www.graphics.cornell.edu/pubs/1997/MT97.html
+    // Reference: [MollerTrumbore97]
+    //      http://www.graphics.cornell.edu/pubs/1997/MT97.html
     // TODO: See also http://jcgt.org/published/0002/01/05/paper.pdf for watertight intersections
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let e1 = self.p2 - self.p1;

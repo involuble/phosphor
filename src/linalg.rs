@@ -2,8 +2,9 @@ use na::*;
 
 // Creates an orthonormal basis given a normal vector.
 //   The vectors are returned in a tuple as tangent and bitangent
-// Reference: http://jcgt.org/published/0006/01/01/paper.pdf
-//   (same paper) http://graphics.pixar.com/library/OrthonormalB/paper.pdf 
+// Reference: [Duff2017Basis]
+//  http://jcgt.org/published/0006/01/01/paper.pdf or
+//  http://graphics.pixar.com/library/OrthonormalB/paper.pdf
 pub fn orthonormal_basis(n: Vector3<f32>) -> (Vector3<f32>, Vector3<f32>) {
     let sign = n.z.signum();
     let a = -1.0 / (sign + n.z);

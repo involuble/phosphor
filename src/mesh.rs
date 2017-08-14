@@ -1,5 +1,5 @@
 use surface::*;
-use materials::*;
+use material::*;
 use primitives::*;
 use triangle_list::*;
 

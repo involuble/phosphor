@@ -1,6 +1,6 @@
 use colour::*;
 use primitives::*;
-use materials::*;
+use material::*;
 use surface::*;
 use mesh::*;
 
