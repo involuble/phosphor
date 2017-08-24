@@ -46,6 +46,7 @@ impl SpherePrimitive {
 // pub struct Intersection<'a, T: 'a> {
 //     pub prim: &'a T,
 
+// TODO: Change this to use Option internally
 #[derive(Debug, Clone, Copy)]
 pub struct Intersection {
     pub p: Point3<f32>,
@@ -63,7 +64,20 @@ impl Intersection {
         o.map_or(f32::INFINITY, |i| i.t)
     }
 
-    // pub fn closest(a: &Option<Intersection>, b: &Option<Intersection>) -> Option<Intersection>;
+    pub fn replace_closest(lhs: &mut Option<Intersection>, rhs: &Option<Intersection>, min: f32) {
+        let l_t = Self::get_dist(lhs);
+        let r_t = Self::get_dist(rhs);
+        if r_t < l_t && r_t > min {
+            *lhs = *rhs;
+        }
+    }
+
+    pub fn set_geom_id(o: &mut Option<Intersection>, id: u32) {
+        match o.as_mut() {
+            Some(i) => i.geom_id = id,
+            _ => (),
+        };
+    }
 }
 
 pub trait Intersectable {
@@ -96,7 +110,7 @@ impl Intersectable for SpherePrimitive {
 
 impl Intersectable for Triangle {
     // Reference: [MollerTrumbore97]
-    //      http://www.graphics.cornell.edu/pubs/1997/MT97.html
+    //    http://www.graphics.cornell.edu/pubs/1997/MT97.html
     // TODO: See also http://jcgt.org/published/0002/01/05/paper.pdf for watertight intersections
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let e1 = self.p2 - self.p1;

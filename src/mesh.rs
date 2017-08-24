@@ -16,7 +16,7 @@ impl Mesh {
     }
 }
 
-impl Geometry for Mesh {
+impl Surface for Mesh {
     fn get_surface_info(&self, i: &Intersection) -> SurfaceInfo {
         SurfaceInfo { n_shading: i.n, material: self.material }
     }
@@ -25,10 +25,7 @@ impl Geometry for Mesh {
 impl Intersectable for Mesh {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let mut o = self.tris.intersect(ray);
-        match o.as_mut() {
-            Some(i) => i.geom_id = self.geom_id,
-            _ => (),
-        };
+        Intersection::set_geom_id(&mut o, self.geom_id);
         o
     }
 }

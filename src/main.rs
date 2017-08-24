@@ -53,6 +53,12 @@ fn main() {
     ];
     scene.add_mesh(bottom_wall, Material::new(Colour::from_luma(0.9)));
 
+    let top_wall = vec![
+        Triangle::new( Point3::new(-3.0, 6.0, 0.0), Point3::new(3.0, 6.0, 0.0), Point3::new(3.0, 6.0, 6.0)),
+        Triangle::new( Point3::new(-3.0, 6.0, 0.0), Point3::new(3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 6.0)),
+    ];
+    scene.add_mesh(top_wall, Material::new(Colour::from_luma(0.9)));
+
     let right_wall = vec![
         Triangle::new( Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 0.0, 6.0), Point3::new(-3.0, 6.0, 6.0)),
         Triangle::new( Point3::new(-3.0, 0.0, 0.0), Point3::new(-3.0, 6.0, 6.0), Point3::new(-3.0, 6.0, 0.0)),
@@ -68,7 +74,7 @@ fn main() {
     scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 3.0), 0.9, Material::new(Colour::from_luma(1.0))));
     scene.add_sphere(Sphere::new(Point3::new(1.5, 1.0, 4.0), 0.9, Material::new(Colour::from_luma(1.0))));
 
-    scene.add_light(Sphere::new(Point3::new(0.0, 5.5, 2.0), 0.4, Material::new_emitter(Colour::from_luma(1.0))));
+    scene.add_light(Sphere::new(Point3::new(0.0, 5.3, 2.0), 0.5, Material::new_emitter(Colour::from_luma(1.0))));
 
     let mut furnace_scene = Scene::new();
     let furnace_c = Colour::from_luma(0.18); // = 118 after sRGB encoding

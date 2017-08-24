@@ -14,11 +14,11 @@ pub fn orthonormal_basis(n: Vector3<f32>) -> (Vector3<f32>, Vector3<f32>) {
     (b1, b2)
 }
 
-// pub fn spherical_angle_to_vec(theta: f32, phi: f32) -> Vector3<f32> {
-//     let sin_theta = theta.sin();
-//     Vector3::new(sin_theta * phi.cos(), sin_theta * phi.sin(), theta.cos())
-// }
+pub fn spherical_direction(theta: f32, phi: f32) -> Vector3<f32> {
+    let sin_theta = theta.sin();
+    Vector3::new(sin_theta * phi.cos(), sin_theta * phi.sin(), theta.cos())
+}
 
-// pub fn spherical_direction(sin_theta: f32, cos_theta: f32, phi: f32) -> Vector3<f32> {
-//     Vector3::new(sin_theta * phi.cos(), sin_theta * phi.sin(), cos_theta)
-// }
+pub fn spherical_dir_from_sincos(sin_theta: f32, cos_theta: f32, phi: f32) -> Vector3<f32> {
+    Vector3::new(sin_theta * phi.cos(), sin_theta * phi.sin(), cos_theta)
+}

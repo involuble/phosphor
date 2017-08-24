@@ -16,6 +16,8 @@ pub struct Renderer {
     pub camera: Camera,
     pub w: u32,
     pub h: u32,
+    pub inv_x_res: f32,
+    pub inv_y_res: f32,
     pub img: Box<[Colour]>,
 }
 
@@ -28,8 +30,27 @@ impl Renderer {
             camera: camera,
             w: w,
             h: h,
+            inv_x_res: 0.0,
+            inv_y_res: 0.0,
             img: buf.into_boxed_slice(),
         }
+    }
+
+    fn inv_resolution(w: u32, h: u32, fov: f32) -> (f32, f32) {
+        let w_f = w as f32;
+        let h_f = h as f32;
+        let aspect_ratio_x;
+        let aspect_ratio_y;
+        if w_f >= h_f {
+            aspect_ratio_x = w_f / h_f as f32;
+            aspect_ratio_y = 1.0;
+        } else {
+            aspect_ratio_x = 1.0;
+            aspect_ratio_y = h_f / w_f;
+        }
+        let fov_scale = (fov / 2.0).tan();
+        // TODO: I don't think fov_scale should be applied to y
+        (aspect_ratio_x * fov_scale / w_f, aspect_ratio_y * fov_scale / h_f)
     }
 
     #[inline]
@@ -51,22 +72,13 @@ impl Renderer {
 
     pub fn intersect_ray(&self, ray: &Ray) -> Option<Intersection> {
         let mut hit = None;
-        let mut dist = f32::INFINITY;
         for prim in &self.scene.spheres {
             let new_hit = prim.intersect(&ray);
-            let new_dist = Intersection::get_dist(&new_hit);
-            if new_dist < dist && new_dist > EPSILON {
-                hit = new_hit;
-                dist = new_dist;
-            }
+            Intersection::replace_closest(&mut hit, &new_hit, EPSILON);
         }
         for prim in &self.scene.meshes {
             let new_hit = prim.intersect(&ray);
-            let new_dist = Intersection::get_dist(&new_hit);
-            if new_dist < dist && new_dist > EPSILON {
-                hit = new_hit;
-                dist = new_dist;
-            }
+            Intersection::replace_closest(&mut hit, &new_hit, EPSILON);
         }
         assert!(hit.is_none() || hit.unwrap().t > 1e-7, "Probable self intersection: ray = {:?}\n intersection = {:?}", ray, hit.unwrap());
         hit
@@ -105,14 +117,14 @@ impl Renderer {
     pub fn trace<R: Rng>(&self, camera_ray: &Ray, rng: &mut R, max_depth: u32) -> Colour {
         let mut ray = *camera_ray;
         let mut acc_c = Colour::zero();
-        let mut refl = Colour::new(1.0, 1.0, 1.0);
+        let mut throughput = Colour::new(1.0, 1.0, 1.0);
 
         for depth in 0..max_depth {
             // TODO: RR
 
             let hit = self.intersect_ray(&ray);
             if hit.is_none() {
-                acc_c += refl * self.scene.background;
+                acc_c += throughput * self.scene.background;
                 return acc_c;
             }
 
@@ -121,22 +133,25 @@ impl Renderer {
             // println!("      DEPTH = {}\nsurface_info = {:?}\nintersection = {:?}\n", depth, surface_info, i);
 
             if depth == 0 {
-                acc_c += refl * surface_info.material.emittance;
+                acc_c += throughput * surface_info.material.emittance;
             }
 
             // Next event estimation/direct light sampling
-            acc_c += refl * self.direct_light_estimate(rng, &i, &surface_info);
+            acc_c += throughput * self.direct_light_estimate(rng, &i, &surface_info);
 
             // Choose new ray direction
             let (tang, bitangent) = orthonormal_basis(i.n);
+
+            // Replace with brdf.sample()
             let (r, pdf) = CosineHemisphereSampler::sample(rng);
+            let f = surface_info.material.base_colour;
 
             let wi = r.x * tang + r.y * bitangent + r.z * i.n;
             let wi = wi.normalize();
 
             // Evaluate brdf
             if pdf > EPSILON {
-                refl *= surface_info.material.base_colour * dot(&wi, &i.n) / PI / pdf;
+                throughput *= f * dot(&wi, &i.n) / PI / pdf;
             }
 
             ray = Ray::new(i.p, Unit::new_unchecked(wi));
@@ -147,7 +162,6 @@ impl Renderer {
     pub fn render(&mut self) {
         let spp: u32 = 16;
         assert!(spp > 0);
-        let camera_right = self.camera.forward.cross(&self.camera.up);
         // println!("SCENE TRIANGLES:\n\n{:?}\n\n", self.scene.meshes);
         for x in 0..self.w {
             for y in 0..self.h {
@@ -163,7 +177,7 @@ impl Renderer {
                     let r1 = rng.next_f32();
                     let r2 = rng.next_f32();
                     let (ss_x, ss_y) = self.screen_space_coord(x_f+r1, y_f+r2);
-                    let camera_ray = self.camera.forward + ss_x*camera_right + ss_y*self.camera.up;
+                    let camera_ray = self.camera.forward + ss_x*self.camera.right + ss_y*self.camera.up;
                     let ray = Ray::new(self.camera.loc, Unit::new_normalize(camera_ray));
                     c += self.trace(&ray, &mut rng, 3);
                 }

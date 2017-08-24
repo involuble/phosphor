@@ -12,7 +12,7 @@ pub struct SurfaceInfo {
     pub material: Material,
 }
 
-pub trait Geometry: Intersectable {
+pub trait Surface: Intersectable {
     fn get_surface_info(&self, i: &Intersection) -> SurfaceInfo;
 }
 
@@ -72,15 +72,12 @@ impl Intersectable for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let s = SpherePrimitive::new(self.center, self.radius);
         let mut o = s.intersect(ray);
-        match o.as_mut() {
-            Some(i) => i.geom_id = self.geom_id,
-            _ => (),
-        };
+        Intersection::set_geom_id(&mut o, self.geom_id);
         o
     }
 }
 
-impl Geometry for Sphere {
+impl Surface for Sphere {
     fn get_surface_info(&self, i: &Intersection) -> SurfaceInfo {
         SurfaceInfo { n_shading: i.n, material: self.material }
     }
