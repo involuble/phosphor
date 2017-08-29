@@ -1,18 +1,18 @@
 use surface::*;
 use material::*;
 use primitives::*;
-use triangle_list::*;
+use intersectable_list::*;
 
 #[derive(Debug)]
 pub struct Mesh {
-    pub tris: TriangleList,
+    pub tris: IntersectableList<Triangle>,
     pub material: Material,
     pub geom_id: u32,
 }
 
 impl Mesh {
     pub fn new(tris: Vec<Triangle>, mat: Material) -> Self {
-        Mesh { tris: TriangleList::from_vec(tris), material: mat, geom_id: INVALID_GEOM_ID }
+        Mesh { tris: IntersectableList::build(tris), material: mat, geom_id: INVALID_GEOM_ID }
     }
 }
 

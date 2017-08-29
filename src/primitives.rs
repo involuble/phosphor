@@ -8,11 +8,11 @@ pub const INVALID_GEOM_ID: u32 = !0;
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {
     pub origin: Point3<f32>,
-    pub dir: Unit<Vector3<f32>>,
+    pub dir: Vector3<f32>,
 }
 
 impl Ray {
-    pub fn new(o: Point3<f32>, dir: Unit<Vector3<f32>>) -> Self {
+    pub fn new(o: Point3<f32>, dir: Vector3<f32>) -> Self {
         Ray {origin: o, dir: dir }
     }
 }
@@ -88,7 +88,7 @@ impl Intersectable for SpherePrimitive {
     // See https://en.wikipedia.org/wiki/Line-sphere_intersection
     fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let a = self.center - ray.origin;
-        let adj = dot(&a, ray.dir.as_ref());
+        let adj = dot(&a, &ray.dir);
         let det = adj*adj - dot(&a,&a) + self.radius*self.radius;
         if det < 0.0 {
             return None;
@@ -101,7 +101,7 @@ impl Intersectable for SpherePrimitive {
         else if s1 > EPSILON { dist = s1; }
         else { return None; }
 
-        let p = ray.origin + ray.dir.unwrap() * dist;
+        let p = ray.origin + ray.dir * dist;
         let n = (p - self.center)/self.radius;
 
         Some(Intersection { p: p, t: dist, n: n, u: 0.0, v: 0.0, geom_id: INVALID_GEOM_ID })
@@ -131,7 +131,7 @@ impl Intersectable for Triangle {
         }
 
         let qvec = tvec.cross(&e1);
-        let v = dot(ray.dir.as_ref(), &qvec) * inv_det;
+        let v = dot(&ray.dir, &qvec) * inv_det;
         if v < 0.0 || u + v > 1.0 {
             return None;
         }
@@ -143,9 +143,9 @@ impl Intersectable for Triangle {
         }
 
         let mut n = normalize(&e2.cross(&e1));
-        if dot(&n, ray.dir.as_ref()) > 0.0 {
+        if dot(&n, &ray.dir) > 0.0 {
             n = -n;
         }
-        Some(Intersection {p: ray.origin + t*ray.dir.unwrap(), t: t, n: n, u: u, v: v, geom_id: INVALID_GEOM_ID })
+        Some(Intersection {p: ray.origin + t*ray.dir, t: t, n: n, u: u, v: v, geom_id: INVALID_GEOM_ID })
     }
 }

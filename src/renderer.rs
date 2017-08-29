@@ -36,7 +36,7 @@ impl Renderer {
         }
     }
 
-    fn inv_resolution(w: u32, h: u32, fov: f32) -> (f32, f32) {
+    fn inv_resolution(w: u32, h: u32) -> (f32, f32) {
         let w_f = w as f32;
         let h_f = h as f32;
         let aspect_ratio_x;
@@ -48,13 +48,11 @@ impl Renderer {
             aspect_ratio_x = 1.0;
             aspect_ratio_y = h_f / w_f;
         }
-        let fov_scale = (fov / 2.0).tan();
         // TODO: I don't think fov_scale should be applied to y
-        (aspect_ratio_x * fov_scale / w_f, aspect_ratio_y * fov_scale / h_f)
+        (aspect_ratio_x / w_f, aspect_ratio_y / h_f)
     }
 
-    #[inline]
-    fn screen_space_coord(&self, x: f32, y: f32) -> (f32, f32) {
+    fn screen_space_coord(&self, x: f32, y: f32) -> Vector2<f32> {
         let aspect_ratio_x;
         let aspect_ratio_y;
         if self.w >= self.h {
@@ -64,10 +62,9 @@ impl Renderer {
             aspect_ratio_x = 1.0;
             aspect_ratio_y = self.h as f32 / self.w as f32;
         }
-        let fov_scale = (self.camera.fov / 2.0).tan();
-        let ss_x = aspect_ratio_x * fov_scale * ((x / self.w as f32) * 2.0 - 1.0);
-        let ss_y = aspect_ratio_y * fov_scale * (1.0 - (y / self.h as f32) * 2.0);
-        (ss_x, ss_y)
+        let ss_x = aspect_ratio_x * ((x / self.w as f32) * 2.0 - 1.0);
+        let ss_y = aspect_ratio_y * (1.0 - (y / self.h as f32) * 2.0);
+        Vector2::new(ss_x, ss_y)
     }
 
     pub fn intersect_ray(&self, ray: &Ray) -> Option<Intersection> {
@@ -101,7 +98,7 @@ impl Renderer {
         let mut c = Colour::black();
         if nl > 0.0 {
             // Offset the ray from the surface by a tiny bit or else it intersects
-            let light_ray = Ray::new(i.p, Unit::new_unchecked(l));
+            let light_ray = Ray::new(i.p, l);
             let light_hit = self.intersect_ray(&light_ray);
             // This triggers around 2-6 times per frame which is a non-issue but requires leaving it commented
             // assert!(light_hit.is_some(), "A vector aimed at an object should either hit it or something else");
@@ -154,7 +151,7 @@ impl Renderer {
                 throughput *= f * dot(&wi, &i.n) / PI / pdf;
             }
 
-            ray = Ray::new(i.p, Unit::new_unchecked(wi));
+            ray = Ray::new(i.p, wi);
         }
         acc_c
     }
@@ -176,10 +173,9 @@ impl Renderer {
                 for _ in 0..spp {
                     let r1 = rng.next_f32();
                     let r2 = rng.next_f32();
-                    let (ss_x, ss_y) = self.screen_space_coord(x_f+r1, y_f+r2);
-                    let camera_ray = self.camera.forward + ss_x*self.camera.right + ss_y*self.camera.up;
-                    let ray = Ray::new(self.camera.loc, Unit::new_normalize(camera_ray));
-                    c += self.trace(&ray, &mut rng, 3);
+                    let ss = self.screen_space_coord(x_f+r1, y_f+r2);
+                    let camera_ray = self.camera.camera_ray_from_ss_coords(ss);
+                    c += self.trace(&camera_ray, &mut rng, 3);
                 }
                 c = c / (spp as f32);
                 self.set_pixel(x, y, c);

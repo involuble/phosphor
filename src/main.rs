@@ -13,7 +13,7 @@ mod scene;
 mod renderer;
 mod colour;
 mod material;
-mod triangle_list;
+mod intersectable_list;
 mod camera;
 mod lights;
 mod sampling;
