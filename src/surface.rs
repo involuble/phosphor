@@ -69,7 +69,7 @@ impl Sphere {
 }
 
 impl Intersectable for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Intersection {
         let s = SpherePrimitive::new(self.center, self.radius);
         let mut o = s.intersect(ray);
         Intersection::set_geom_id(&mut o, self.geom_id);

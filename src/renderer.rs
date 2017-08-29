@@ -67,18 +67,18 @@ impl Renderer {
         Vector2::new(ss_x, ss_y)
     }
 
-    pub fn intersect_ray(&self, ray: &Ray) -> Option<Intersection> {
-        let mut hit = None;
+    pub fn intersect_ray(&self, ray: &Ray) -> Intersection {
+        let mut intersect = Intersection::miss();
         for prim in &self.scene.spheres {
-            let new_hit = prim.intersect(&ray);
-            Intersection::replace_closest(&mut hit, &new_hit, EPSILON);
+            let new_intersect = prim.intersect(&ray);
+            Intersection::replace_closest(&mut intersect, &new_intersect, EPSILON);
         }
         for prim in &self.scene.meshes {
-            let new_hit = prim.intersect(&ray);
-            Intersection::replace_closest(&mut hit, &new_hit, EPSILON);
+            let new_intersect = prim.intersect(&ray);
+            Intersection::replace_closest(&mut intersect, &new_intersect, EPSILON);
         }
-        assert!(hit.is_none() || hit.unwrap().t > 1e-7, "Probable self intersection: ray = {:?}\n intersection = {:?}", ray, hit.unwrap());
-        hit
+        assert!(!intersect.hit || intersect.t > 1e-7, "Probable self intersection: ray = {:?}\n intersection = {:?}", ray, intersect);
+        intersect
     }
 
     pub fn direct_light_estimate<R: Rng>(&self, rng: &mut R, i: &Intersection, surface_info: &SurfaceInfo) -> Colour {
@@ -99,11 +99,10 @@ impl Renderer {
         if nl > 0.0 {
             // Offset the ray from the surface by a tiny bit or else it intersects
             let light_ray = Ray::new(i.p, l);
-            let light_hit = self.intersect_ray(&light_ray);
+            let light_intersect = self.intersect_ray(&light_ray);
             // This triggers around 2-6 times per frame which is a non-issue but requires leaving it commented
             // assert!(light_hit.is_some(), "A vector aimed at an object should either hit it or something else");
-            if light_hit.is_some() && light_hit.unwrap().geom_id == light.geom_id {
-                let _ = light_hit.unwrap();
+            if light_intersect.hit && light_intersect.geom_id == light.geom_id {
                 // TODO: Evaluate BRDF
                 c += surface_info.material.base_colour * light.material.emittance * nl / pdf;
             }
@@ -119,13 +118,12 @@ impl Renderer {
         for depth in 0..max_depth {
             // TODO: RR
 
-            let hit = self.intersect_ray(&ray);
-            if hit.is_none() {
+            let i = self.intersect_ray(&ray);
+            if !i.hit {
                 acc_c += throughput * self.scene.background;
                 return acc_c;
             }
 
-            let i = hit.unwrap();
             let surface_info = self.scene.get_surface_info(i.geom_id, &i);
             // println!("      DEPTH = {}\nsurface_info = {:?}\nintersection = {:?}\n", depth, surface_info, i);
 

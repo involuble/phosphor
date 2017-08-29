@@ -23,7 +23,7 @@ impl Surface for Mesh {
 }
 
 impl Intersectable for Mesh {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
+    fn intersect(&self, ray: &Ray) -> Intersection {
         let mut o = self.tris.intersect(ray);
         Intersection::set_geom_id(&mut o, self.geom_id);
         o

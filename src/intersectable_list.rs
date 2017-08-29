@@ -14,8 +14,8 @@ impl<T> IntersectableList<T> where T: Intersectable {
 }
 
 impl<T> Intersectable for IntersectableList<T> where T: Intersectable {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
-        let mut hit = None;
+    fn intersect(&self, ray: &Ray) -> Intersection {
+        let mut hit = Intersection::miss();
         for i in &self.geom {
             let new_hit = i.intersect(&ray);
             Intersection::replace_closest(&mut hit, &new_hit, EPSILON);
