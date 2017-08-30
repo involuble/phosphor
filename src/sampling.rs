@@ -3,7 +3,6 @@
 use na::*;
 use std::f32;
 use std::f32::consts::{PI, FRAC_1_PI};
-use std::default::{Default};
 use rand;
 
 use linalg::*;
@@ -58,30 +57,3 @@ impl UniformConeSampler {
         (spherical_dir_from_sincos(sin_theta, cos_theta, phi), 1.0 / (2.0 * PI * (1.0 - cos_theta_max)))
     }
 }
-
-// https://en.wikipedia.org/wiki/Low-discrepancy_sequence#Additive_recurrence
-// https://blog.demofox.org/2017/05/29/when-random-numbers-are-too-random-low-discrepancy-sequences/
-pub struct AdditiveRecurrence {
-    pub f: f32,
-}
-
-impl Default for AdditiveRecurrence {
-    fn default() -> Self { AdditiveRecurrence { f: 0.5 }}
-}
-
-impl AdditiveRecurrence {
-    pub fn seed(seed: f32) -> Self {
-        AdditiveRecurrence { f: seed }
-    }
-
-    pub fn generate(&mut self) -> f32 {
-        const BASE: f32 = 1.61803398875;
-        let r = self.f;
-        self.f = (self.f + BASE) % 1.0;
-        r
-    }
-}
-
-// TODO:
-// Reference: http://web.maths.unsw.edu.au/~fkuo/sobol/
-pub struct SobolSequence;
