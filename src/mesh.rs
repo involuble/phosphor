@@ -1,7 +1,6 @@
 use surface::*;
 use material::*;
-use primitives::*;
-use intersectable_list::*;
+use geometry::*;
 
 #[derive(Debug)]
 pub struct Mesh {

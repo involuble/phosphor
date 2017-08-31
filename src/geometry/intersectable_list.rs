@@ -1,4 +1,4 @@
-use primitives::*;
+use intersection::*;
 
 #[derive(Debug)]
 pub struct IntersectableList<T> where T: Intersectable {

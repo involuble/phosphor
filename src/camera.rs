@@ -1,7 +1,7 @@
 use na::*;
 use std::f32::consts::{PI};
 
-use primitives::*;
+use geometry::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Camera {

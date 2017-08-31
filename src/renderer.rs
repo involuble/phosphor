@@ -3,7 +3,7 @@ use std::f32;
 use std::f32::consts::{PI};
 use rand::{Rng, thread_rng};
 
-use primitives::*;
+use geometry::*;
 use scene::*;
 use colour::*;
 use camera::*;

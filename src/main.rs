@@ -8,12 +8,11 @@ extern crate approx;
 extern crate num_traits;
 extern crate rand;
 
-mod primitives;
+mod geometry;
 mod scene;
 mod renderer;
 mod colour;
 mod material;
-mod intersectable_list;
 mod camera;
 mod lights;
 mod sampling;
@@ -23,7 +22,7 @@ mod linalg;
 
 use na::*;
 
-use primitives::*;
+use geometry::*;
 use scene::*;
 use colour::*;
 use material::*;
@@ -71,14 +70,14 @@ fn main() {
     ];
     scene.add_mesh(left_wall, Material::new(Colour::new(1.0, 0.0, 0.0)));
 
-    scene.add_sphere(Sphere::new(Point3::new(-1.5, 1.0, 3.0), 0.9, Material::new(Colour::from_luma(1.0))));
-    scene.add_sphere(Sphere::new(Point3::new(1.5, 1.0, 4.0), 0.9, Material::new(Colour::from_luma(1.0))));
+    scene.add_sphere(SphereSurface::new(Point3::new(-1.5, 1.0, 3.0), 0.9, Material::new(Colour::from_luma(1.0))));
+    scene.add_sphere(SphereSurface::new(Point3::new(1.5, 1.0, 4.0), 0.9, Material::new(Colour::from_luma(1.0))));
 
-    scene.add_light(Sphere::new(Point3::new(0.0, 5.3, 2.0), 0.5, Material::new_emitter(Colour::from_luma(1.0))));
+    scene.add_light(SphereSurface::new(Point3::new(0.0, 5.3, 2.0), 0.5, Material::new_emitter(Colour::from_luma(1.0))));
 
     let mut furnace_scene = Scene::new();
     let furnace_c = Colour::from_luma(0.18); // = 118 after sRGB encoding
-    furnace_scene.add_sphere(Sphere::new(Point3::new(0.0, 3.0, 1.0), 2.0, Material::new(furnace_c)));
+    furnace_scene.add_sphere(SphereSurface::new(Point3::new(0.0, 3.0, 1.0), 2.0, Material::new(furnace_c)));
     // println!("Linear colour {} to sRGB = {}", furnace_c.r, furnace_c.into_u8_rgb()[0]); // 0.18 & 118
     furnace_scene.background = Colour::from_luma(1.0);
 

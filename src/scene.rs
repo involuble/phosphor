@@ -1,13 +1,13 @@
 use colour::*;
-use primitives::*;
+use geometry::*;
 use material::*;
 use surface::*;
 use mesh::*;
 
 pub struct Scene {
     pub meshes: Vec<Mesh>,
-    pub spheres: Vec<Sphere>,
-    pub lights: Vec<Sphere>,
+    pub spheres: Vec<SphereSurface>,
+    pub lights: Vec<SphereSurface>,
     pub background: Colour,
 }
 
@@ -21,7 +21,7 @@ impl Scene {
         }
     }
 
-    pub fn add_sphere(&mut self, mut sphere: Sphere) {
+    pub fn add_sphere(&mut self, mut sphere: SphereSurface) {
         sphere.geom_id = (self.spheres.len() + 200) as u32;
         self.spheres.push(sphere);
     }
@@ -42,7 +42,7 @@ impl Scene {
         }
     }
 
-    pub fn add_light(&mut self, mut light: Sphere) {
+    pub fn add_light(&mut self, mut light: SphereSurface) {
         let e = light.material.emittance;
         assert!(!e.is_black());
         let id = self.spheres.len() as u32 + 200;

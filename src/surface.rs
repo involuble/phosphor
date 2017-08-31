@@ -1,7 +1,7 @@
 use na::*;
 use rand;
 
-use primitives::*;
+use geometry::*;
 use material::*;
 use sampling::*;
 use linalg::*;
@@ -17,20 +17,20 @@ pub trait Surface: Intersectable {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Sphere {
+pub struct SphereSurface {
     pub center: Point3<f32>,
     pub radius: f32,
     pub material: Material,
     pub geom_id: u32,
 }
 
-impl Sphere {
+impl SphereSurface {
     pub fn new(c: Point3<f32>, r: f32, mat: Material) -> Self {
-        Sphere { center: c, radius: r, material: mat, geom_id: INVALID_GEOM_ID }
+        SphereSurface { center: c, radius: r, material: mat, geom_id: INVALID_GEOM_ID }
     }
 }
 
-impl Sphere {
+impl SphereSurface {
     // Returns a point on the sphere
     // Reference: http://ompf2.com/viewtopic.php?f=3&t=1914 (and PBRT)
     // TODO
@@ -68,16 +68,16 @@ impl Sphere {
     }
 }
 
-impl Intersectable for Sphere {
+impl Intersectable for SphereSurface {
     fn intersect(&self, ray: &Ray) -> Intersection {
-        let s = SpherePrimitive::new(self.center, self.radius);
+        let s = Sphere::new(self.center, self.radius);
         let mut o = s.intersect(ray);
         Intersection::set_geom_id(&mut o, self.geom_id);
         o
     }
 }
 
-impl Surface for Sphere {
+impl Surface for SphereSurface {
     fn get_surface_info(&self, i: &Intersection) -> SurfaceInfo {
         SurfaceInfo { n_shading: i.n, material: self.material }
     }
