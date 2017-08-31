@@ -1,0 +1,23 @@
+[package]
+name = "raytracer"
+version = "0.1.0"
+authors = ["<locke9@gmail.com>"]
+
+description = """
+A ray tracer written in Rust
+"""
+
+[dependencies]
+nalgebra = "^0.12"
+approx = "^0.1.1"
+log = "^0.3.7"
+env_logger = "^0.4.3"
+rand = "^0.3"
+image = "^0.13"
+num-traits = "^0.1.40"
+
+[profile.dev]
+
+#[profile.release]
+#lto = true
+#panic = 'abort'
