@@ -1,4 +1,4 @@
-use na::*;
+use cgmath::*;
 use std::f32;
 use std::f32::consts::{PI};
 use rand::{Rng, thread_rng};
@@ -93,7 +93,7 @@ impl Renderer {
         }
 
         let (l, pdf) = light.sample_vec(rng, i.p);
-        let nl = l.dot(&i.n);
+        let nl = dot(l, i.n);
 
         let mut c = Colour::black();
         if nl > 0.0 {
@@ -146,7 +146,7 @@ impl Renderer {
 
             // Evaluate brdf
             if pdf > EPSILON {
-                throughput *= f * dot(&wi, &i.n) / PI / pdf;
+                throughput *= f * dot(wi, i.n) / PI / pdf;
             }
 
             ray = Ray::new(i.p, wi);
@@ -172,7 +172,7 @@ impl Renderer {
                     let r1 = rng.next_f32();
                     let r2 = rng.next_f32();
                     let ss = self.screen_space_coord(x_f+r1, y_f+r2);
-                    let camera_ray = self.camera.camera_ray_from_ss_coords(ss);
+                    let camera_ray = self.camera.ray_from_ss_coords(ss);
                     c += self.trace(&camera_ray, &mut rng, 3);
                 }
                 c = c / (spp as f32);

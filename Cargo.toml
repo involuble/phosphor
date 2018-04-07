@@ -1,23 +1,33 @@
 [package]
-name = "raytracer"
+name = "phosphor"
 version = "0.1.0"
 authors = ["<locke9@gmail.com>"]
 
 description = """
-A ray tracer written in Rust
+A path tracer written in Rust
 """
 
 [dependencies]
-nalgebra = "^0.12"
-approx = "^0.1.1"
-log = "^0.3.7"
-env_logger = "^0.4.3"
-rand = "^0.3"
-image = "^0.13"
+cgmath = "0.16"
+#nalgebra = "^0.14"
+approx = "0.1.1"
+log = "0.4"
+fern = "0.5"
+#simplelog = "0.5"
+rand = "0.4"
+image = "0.18"
 num-traits = "^0.1.40"
+tobj = "0.1.6"
+
+#noisy_float = "0.1.4"
+#derive_more = "0.9"
 
 [profile.dev]
+opt-level = 2
 
 #[profile.release]
 #lto = true
+#opt-level = 3
+#codegen-units = 1
 #panic = 'abort'
+#panic = 'unwind'

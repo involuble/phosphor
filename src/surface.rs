@@ -1,4 +1,4 @@
-use na::*;
+use cgmath::*;
 use rand;
 
 use geometry::*;
@@ -54,7 +54,7 @@ impl SphereSurface {
     // }
 
     pub fn sample_vec<R: rand::Rng>(&self, rng: &mut R, p: Point3<f32>) -> (Vector3<f32>, f32) {
-        let sin_theta_max2 = self.radius * self.radius / distance_squared(&self.center, &p);
+        let sin_theta_max2 = self.radius * self.radius / self.center.distance2(p);
         assert!(sin_theta_max2 <= 1.0 && sin_theta_max2 >= 0.0);
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
         let (v, cone_pdf) = UniformConeSampler::sample(rng, cos_theta_max);
@@ -63,7 +63,7 @@ impl SphereSurface {
         let (cone_x, cone_y) = orthonormal_basis(to);
 
         let d = v.x * cone_x + v.y * cone_y + v.z * to;
-        assert_relative_eq!(d.norm(), 1.0, epsilon=EPSILON);
+        assert_relative_eq!(d.magnitude(), 1.0, epsilon=EPSILON);
         (d.normalize(), cone_pdf)
     }
 }

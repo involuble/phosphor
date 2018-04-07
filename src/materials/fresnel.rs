@@ -1,5 +1,5 @@
 use std::f32::{powi};
-use na::*;
+use cgmath::*;
 
 use colour::*;
 

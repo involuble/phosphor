@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate log;
-extern crate env_logger;
+extern crate fern;
 extern crate image;
-extern crate nalgebra as na;
+extern crate cgmath;
 #[macro_use]
 extern crate approx;
 extern crate num_traits;
@@ -20,7 +20,7 @@ mod surface;
 mod mesh;
 mod linalg;
 
-use na::*;
+use cgmath::*;
 
 use geometry::*;
 use scene::*;
@@ -30,15 +30,20 @@ use camera::*;
 use surface::*;
 use renderer::*;
 
-// NOTE: Putting this here for reference
-// trait OrdDebug: Ord + Debug {}
-// impl<T: Ord + Debug> OrdDebug for T {}
+fn setup_logger() -> Result<(), fern::InitError> {
+    fern::Dispatch::new()
+        .level(log::LevelFilter::Debug)
+        .chain(std::io::stdout())
+        // .chain(fern::log_file("render_log.log")?)
+        .apply()?;
+    Ok(())
+}
 
 fn main() {
-    let _ = env_logger::init();
+    let _ = setup_logger();
 
     let mut scene = Scene::new();
-    let camera = Camera::new(Point3::new(0.0, 3.0, -3.1), Vector3::z(), Vector3::y(), 90.0);
+    let camera = Camera::new(Point3::new(0.0, 3.0, -3.1), Vector3::unit_z(), Vector3::unit_y(), 90.0);
 
     let back_wall = vec![
         Triangle::new( Point3::new(-3.0, 0.0, 6.0), Point3::new(3.0, 0.0, 6.0), Point3::new(3.0, 6.0, 6.0)),

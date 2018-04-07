@@ -1,4 +1,4 @@
-use na::*;
+use cgmath::*;
 
 use intersection::*;
 
@@ -23,8 +23,8 @@ impl Intersectable for Triangle {
         let e1 = self.p2 - self.p1;
         let e2 = self.p3 - self.p1;
         
-        let pvec = ray.dir.cross(&e2);
-        let det = dot(&e1, &pvec);
+        let pvec = ray.dir.cross(e2);
+        let det = dot(e1, pvec);
 
         if relative_eq!(det, 0.0, epsilon=EPSILON) {
             return Intersection::miss();
@@ -32,25 +32,25 @@ impl Intersectable for Triangle {
 
         let inv_det = 1.0 / det;
         let tvec = ray.origin - self.p1;
-        let u = dot(&tvec, &pvec) * inv_det;
+        let u = dot(tvec, pvec) * inv_det;
         if u < 0.0 || u > 1.0 {
             return Intersection::miss();
         }
 
-        let qvec = tvec.cross(&e1);
-        let v = dot(&ray.dir, &qvec) * inv_det;
+        let qvec = tvec.cross(e1);
+        let v = dot(ray.dir, qvec) * inv_det;
         if v < 0.0 || u + v > 1.0 {
             return Intersection::miss();
         }
 
-        let t = dot(&e2, &qvec) * inv_det;
+        let t = dot(e2, qvec) * inv_det;
 
         if t < 0.0 {
             return Intersection::miss();
         }
 
-        let mut n = normalize(&e2.cross(&e1));
-        if dot(&n, &ray.dir) > 0.0 {
+        let mut n = e2.cross(e1).normalize();
+        if dot(n, ray.dir) > 0.0 {
             n = -n;
         }
         Intersection::hit(ray.origin + t*ray.dir, t, n, u, v)

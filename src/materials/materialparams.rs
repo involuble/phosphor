@@ -1,4 +1,4 @@
-use na::*;
+use cgmath::*;
 
 use colour::*;
 

@@ -1,4 +1,4 @@
-use na::*;
+use cgmath::*;
 use std::f32::consts::{PI};
 
 use geometry::*;
@@ -18,9 +18,9 @@ impl Camera {
     pub fn default() -> Self {
         Camera {
             loc: Point3::origin(),
-            forward: -Vector3::z(),
-            up: Vector3::y(),
-            right: Vector3::x(),
+            forward: -Vector3::unit_z(),
+            up: Vector3::unit_y(),
+            right: Vector3::unit_x(),
             fov: PI / 2.0,
             fov_scale: 1.0,
         }
@@ -30,10 +30,10 @@ impl Camera {
     pub fn new(l: Point3<f32>, forward: Vector3<f32>, up: Vector3<f32>, fov_degrees: f32) -> Self {
         let fov_rad = fov_degrees.to_radians();
         let fov_scale = (fov_rad / 2.0).tan();
-        Camera { loc: l, forward: forward, up: up, right: forward.cross(&up).normalize(), fov: fov_rad, fov_scale: fov_scale }
+        Camera { loc: l, forward: forward, up: up, right: forward.cross(up).normalize(), fov: fov_rad, fov_scale: fov_scale }
     }
 
-    pub fn camera_ray_from_ss_coords(&self, coords: Vector2<f32>) -> Ray {
+    pub fn ray_from_ss_coords(&self, coords: Vector2<f32>) -> Ray {
         let dir = self.forward + coords.x*self.right + coords.y*self.up;
         let dir_n = dir.normalize();
         Ray { origin: self.loc, dir: dir_n }

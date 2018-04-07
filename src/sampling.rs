@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use na::*;
+use cgmath::*;
 use std::f32;
 use std::f32::consts::{PI, FRAC_1_PI};
 use rand;

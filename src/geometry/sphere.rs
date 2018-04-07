@@ -1,4 +1,4 @@
-use na::*;
+use cgmath::*;
 
 use intersection::*;
 
@@ -18,8 +18,8 @@ impl Intersectable for Sphere {
     // See https://en.wikipedia.org/wiki/Line-sphere_intersection
     fn intersect(&self, ray: &Ray) -> Intersection {
         let a = self.center - ray.origin;
-        let adj = dot(&a, &ray.dir);
-        let det = adj*adj - dot(&a,&a) + self.radius*self.radius;
+        let adj = dot(a, ray.dir);
+        let det = adj*adj - dot(a,a) + self.radius*self.radius;
         if det < 0.0 {
             return Intersection::miss();
         }

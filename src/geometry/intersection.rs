@@ -1,4 +1,4 @@
-use na::*;
+use cgmath::*;
 use num_traits::{Zero};
 use std::f32;
 

@@ -1,4 +1,4 @@
-use na::*;
+use cgmath::*;
 use std::f32::consts::PI;
 use std::f32::{sqrt, abs};
 use rand;
