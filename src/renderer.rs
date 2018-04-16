@@ -138,7 +138,7 @@ impl Renderer {
             let (tang, bitangent) = orthonormal_basis(i.n);
 
             // Replace with brdf.sample()
-            let (r, pdf) = CosineHemisphereSampler::sample(rng);
+            let (r, pdf) = CosineHemisphereDistribution::sample(rng);
             let f = surface_info.material.base_colour;
 
             let wi = r.x * tang + r.y * bitangent + r.z * i.n;

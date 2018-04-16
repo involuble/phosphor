@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use cgmath::*;
 
 // Creates an orthonormal basis given a normal vector.

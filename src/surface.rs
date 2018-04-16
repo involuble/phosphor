@@ -57,7 +57,7 @@ impl SphereSurface {
         let sin_theta_max2 = self.radius * self.radius / self.center.distance2(p);
         assert!(sin_theta_max2 <= 1.0 && sin_theta_max2 >= 0.0);
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
-        let (v, cone_pdf) = UniformConeSampler::sample(rng, cos_theta_max);
+        let (v, cone_pdf) = UniformConeDistribution::sample(rng, cos_theta_max);
 
         let to = (self.center - p).normalize();
         let (cone_x, cone_y) = orthonormal_basis(to);
