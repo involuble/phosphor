@@ -1,39 +1,82 @@
-use cgmath::*;
+use math::*;
+use embree::*;
+use colour::*;
+use geometry::{AreaLight, LightSample};
 
-use intersection::*;
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
     pub center: Point3<f32>,
     pub radius: f32,
+    pub emission: Colour,
 }
 
 impl Sphere {
-    pub fn new(c: Point3<f32>, r: f32) -> Self {
-        Sphere { center: c, radius: r }
+    pub fn unit() -> Self {
+        Sphere {
+            center: Point3::origin(),
+            radius: 1.0,
+            emission: Colour::zero(),
+        }
     }
 }
 
-impl Intersectable for Sphere {
-    // See https://en.wikipedia.org/wiki/Line-sphere_intersection
-    fn intersect(&self, ray: &Ray) -> Intersection {
-        let a = self.center - ray.origin;
-        let adj = dot(a, ray.dir);
-        let det = adj*adj - dot(a,a) + self.radius*self.radius;
-        if det < 0.0 {
-            return Intersection::miss();
+impl AreaLight for Sphere {
+    fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample {
+        let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
+        let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
+        let pdf = 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
+        LightSample {
+            direction: p - initial,
+            radiance: self.emission,
+            pdf: PdfW(pdf),
         }
-        let sdet = det.sqrt();
-        let s1 = adj + sdet;
-        let s2 = adj - sdet;
-        let dist;
-        if s2 < s1 && s2 > EPSILON { dist = s2; }
-        else if s1 > EPSILON { dist = s1; }
-        else { return Intersection::miss(); }
+    }
 
-        let p = ray.origin + ray.dir * dist;
-        let n = (p - self.center)/self.radius;
+    fn sample(&self, initial: Point3<f32>) -> LightSample {
+        unimplemented!()
+        // LightSample {
+        //     radiance: self.emission,
+        // }
+    }
+}
 
-        Intersection::hit(p, dist, n, 0.0, 0.0)
+impl UserPrimitive for Sphere {
+    fn intersect(&self, ray: &Ray) -> UserPrimHit {
+        let v = ray.origin - self.center;
+
+        let a = ray.dir.magnitude2();
+        let b = 2.0 * dot(v, ray.dir);
+        let c = v.magnitude2() - self.radius * self.radius;
+        let d = b*b - 4.0 * a * c;
+        if d < 0.0 {
+            return UserPrimHit::miss()
+        }
+
+        let q = d.sqrt();
+        let rcp_a = 1.0 / a;
+
+        let t0 = 0.5 * rcp_a * (-b - q);
+        if ray.in_range(t0) {
+            return UserPrimHit {
+                t: t0,
+                Ng: ray.point_at_dist(t0) - self.center,
+                uv: Vector2::zero(),
+            }
+        }
+        let t1 = 0.5 * rcp_a * (-b + q);
+        if ray.in_range(t1) {
+            return UserPrimHit {
+                t: t1,
+                Ng: ray.point_at_dist(t1) - self.center,
+                uv: Vector2::zero(),
+            }
+        }
+        UserPrimHit::miss()
+    }
+
+    fn bounds(&self) -> AABB {
+        AABB::new(
+            self.center - Vector3::new(self.radius, self.radius, self.radius),
+            self.center + Vector3::new(self.radius, self.radius, self.radius))
     }
 }

@@ -1,53 +1,115 @@
+use cgmath::*;
+use embree;
+use embree::{BuildQuality, SceneFlags, Hit, GeomID};
+use vec_map::VecMap;
+
+use math::*;
 use colour::*;
-use geometry::*;
 use material::*;
-use surface::*;
-use mesh::*;
+use geometry::*;
 
 pub struct Scene {
-    pub meshes: Vec<Mesh>,
-    pub spheres: Vec<SphereSurface>,
-    pub lights: Vec<SphereSurface>,
-    pub background: Colour,
+    scene: embree::Scene,
+    primitives: VecMap<Primitive>,
+    pub skybox: Colour,
+    // lights: Vec<(GeomID, EmissiveGeometry)>,
+}
+
+struct Primitive {
+    pub emitter: EmissiveGeometry,
+    pub material: Material,
+    // pub tex_scale: Vector2<f32>,
+    // pub normal_map: Texture,
+}
+
+enum EmissiveGeometry {
+    NotEmissive,
+    Sphere(Sphere),
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug, Clone, Copy)]
+pub struct ShadingParameters<'a> {
+    pub material: &'a Material,
+    pub Ns: Vector3<f32>,
+    pub tangent: Vector3<f32>,
 }
 
 impl Scene {
-    pub fn new() -> Self {
+    pub fn intersect(&self, ray: &Ray) -> Hit {
+        self.scene.intersect((*ray).into())
+    }
+
+    pub fn eval_skybox(&self, _: Vector3<f32>) -> Colour {
+        self.skybox
+    }
+
+    pub fn emission_at(&self, ray: &Ray, hit: &Hit) -> LightSample {
+        let p = ray.point_at_dist(hit.t);
+        let e = &self.primitives[hit.geom_id.unwrap() as usize].emitter;
+        match *e {
+            EmissiveGeometry::NotEmissive => LightSample {
+                direction: Vector3::zero(),
+                radiance: Colour::zero(),
+                pdf: PdfW(0.0),
+            },
+            EmissiveGeometry::Sphere(ref s) => s.eval_emission_at(ray.origin, p)
+        }
+    }
+    
+    pub fn get_material(&self, id: GeomID) -> &Material {
+        &self.primitives[id.unwrap() as usize].material
+    }
+}
+
+pub struct SceneBuilder {
+    device: embree::Device,
+    scene: embree::SceneBuilder,
+    primitives: VecMap<Primitive>,
+    skybox: Colour,
+}
+
+impl SceneBuilder {
+    pub fn new(device: &embree::Device) -> Self {
+        let mut s = embree::SceneBuilder::new(device);
+        s.set_build_quality(BuildQuality::Medium);
+        s.set_flags(SceneFlags::ROBUST | SceneFlags::COMPACT);
+
+        SceneBuilder {
+            device: device.clone(),
+            skybox: Colour::zero(),
+            scene: s,
+            primitives: VecMap::new(),
+        }
+    }
+
+    pub fn add_emissive_sphere(&mut self, sphere: Sphere) {
+        debug_assert!(!sphere.emission.is_zero(), "Sphere is not emissive");
+
+        let user = embree::UserGeometry::new(&self.device, vec![sphere.clone()]);
+        let id = &self.scene.attach(user.build());
+        let prim = Primitive {
+            emitter: EmissiveGeometry::Sphere(sphere),
+            material: Material::Emitter,
+        };
+        self.primitives.insert(id.unwrap() as usize, prim);
+    }
+
+    pub fn add_sphere(&mut self, sphere: Sphere, mat: Material) {
+        let user = embree::UserGeometry::new(&self.device, vec![sphere]);
+        let id = &self.scene.attach(user.build());
+        let prim = Primitive {
+            emitter: EmissiveGeometry::NotEmissive,
+            material: mat,
+        };
+        self.primitives.insert(id.unwrap() as usize, prim);
+    }
+
+    pub fn build(self) -> Scene {
         Scene {
-            meshes: Vec::new(),
-            spheres: Vec::new(),
-            lights: Vec::new(),
-            background: Colour::black(),
+            scene: self.scene.build(),
+            primitives: self.primitives,
+            skybox: self.skybox,
         }
-    }
-
-    pub fn add_sphere(&mut self, mut sphere: SphereSurface) {
-        sphere.geom_id = (self.spheres.len() + 200) as u32;
-        self.spheres.push(sphere);
-    }
-
-    pub fn add_mesh(&mut self, list: Vec<Triangle>, mat: Material) {
-        let mut mesh = Mesh::new(list, mat);
-        mesh.geom_id = self.meshes.len() as u32;
-        self.meshes.push(mesh);
-    }
-
-    pub fn get_surface_info(&self, geom_id: u32, i: &Intersection) -> SurfaceInfo {
-        if geom_id >= 200 {
-            let s = &self.spheres[(geom_id - 200) as usize];
-            s.get_surface_info(i)
-        } else {
-            let m = &self.meshes[geom_id as usize];
-            m.get_surface_info(i)
-        }
-    }
-
-    pub fn add_light(&mut self, mut light: SphereSurface) {
-        let e = light.material.emittance;
-        assert!(!e.is_black());
-        let id = self.spheres.len() as u32 + 200;
-        light.geom_id = id;
-        self.lights.push(light);
-        self.spheres.push(light);
     }
 }

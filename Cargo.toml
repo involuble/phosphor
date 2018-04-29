@@ -9,18 +9,20 @@ A path tracer written in Rust
 
 [dependencies]
 cgmath = "0.16"
-#nalgebra = "^0.14"
 approx = "0.1.1"
 log = "0.4"
 fern = "0.5"
-#simplelog = "0.5"
 rand = "0.4"
 image = "0.18"
-num-traits = "^0.1.40"
+num-traits = "0.1.43"
 tobj = "0.1.6"
+vec_map = "0.8"
+serde = "1"
+# state = "0.4"
+embree = { path = "../embree-rs" }
 
-#noisy_float = "0.1.4"
-#derive_more = "0.9"
+# noisy_float = "0.1"
+# derive_more = "0.10"
 
 [profile.dev]
 opt-level = 2

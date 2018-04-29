@@ -1,17 +1,17 @@
 use colour::*;
+use materials::*;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Material {
-    pub base_colour: Colour,
-    pub emittance: Colour,
+#[derive(Debug, Clone)]
+pub enum Material {
+    Emitter,
+    Lambert(Lambert),
 }
 
-impl Material {
-    pub fn new(colour: Colour) -> Self {
-        Material { base_colour: colour, emittance: Colour::zero() }
-    }
-
-    pub fn new_emitter(e: Colour) -> Self {
-        Material { base_colour: Colour::black(), emittance: e }
+impl Bsdf for Material {
+    fn albedo(&self) -> Colour {
+        match *self {
+            Material::Emitter => Colour::new(1.0, 1.0, 1.0),
+            Material::Lambert(ref l) => l.albedo
+        }
     }
 }

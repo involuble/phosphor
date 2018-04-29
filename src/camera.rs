@@ -1,41 +1,35 @@
+use std::f32;
 use cgmath::*;
-use std::f32::consts::{PI};
 
 use geometry::*;
 
-#[derive(Debug, Clone, Copy)]
 pub struct Camera {
-    pub loc: Point3<f32>,
-    pub forward: Vector3<f32>,
-    pub up: Vector3<f32>,
-    pub right: Vector3<f32>,
-    pub fov: f32,
-    pub fov_scale: f32,
+    pub origin: Point3<f32>,
+    forward: Vector3<f32>,
+    down: Vector3<f32>,
+    right: Vector3<f32>,
+    upper_left: Vector3<f32>,
 }
 
 impl Camera {
-    #[allow(dead_code)]
-    pub fn default() -> Self {
+    pub fn new(origin: Point3<f32>, look_at: Point3<f32>, up: Vector3<f32>, fov_vertical: Deg<f32>, aspect_ratio: f32) -> Self {
+        let forward = (look_at - origin).normalize();
+        let fov: Rad<f32> = fov_vertical.into();
+        let half_height = (fov.0 / 2.0).tan();
+        let half_width  = half_height * aspect_ratio;
+        let right = forward.cross(up).normalize();
+        let down = forward.cross(right).normalize();
         Camera {
-            loc: Point3::origin(),
-            forward: -Vector3::unit_z(),
-            up: Vector3::unit_y(),
-            right: Vector3::unit_x(),
-            fov: PI / 2.0,
-            fov_scale: 1.0,
+            origin: origin,
+            forward: forward,
+            down: 2.0 * half_height * down,
+            right: 2.0 * half_width * right,
+            upper_left: -half_width * right + -half_height * down,
         }
     }
 
-    // TODO: Perhaps make a CameraBuilder type for this
-    pub fn new(l: Point3<f32>, forward: Vector3<f32>, up: Vector3<f32>, fov_degrees: f32) -> Self {
-        let fov_rad = fov_degrees.to_radians();
-        let fov_scale = (fov_rad / 2.0).tan();
-        Camera { loc: l, forward: forward, up: up, right: forward.cross(up).normalize(), fov: fov_rad, fov_scale: fov_scale }
-    }
-
-    pub fn ray_from_ss_coords(&self, coords: Vector2<f32>) -> Ray {
-        let dir = self.forward + coords.x*self.right + coords.y*self.up;
-        let dir_n = dir.normalize();
-        Ray { origin: self.loc, dir: dir_n }
+    pub fn get_ray(&self, x: f32, y: f32) -> Ray {
+        let dir = self.upper_left + x * self.right + y * self.down + self.forward;
+        Ray::new(self.origin, dir.normalize(), f32::MAX)
     }
 }

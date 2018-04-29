@@ -1,9 +1,7 @@
-pub mod intersectable_list;
-pub mod intersection;
-pub mod triangle;
 pub mod sphere;
+pub mod traits;
+pub mod ray;
 
-pub use intersectable_list::*;
-pub use intersection::*;
-pub use triangle::*;
-pub use sphere::*;
+pub use self::sphere::*;
+pub use self::traits::*;
+pub use self::ray::*;

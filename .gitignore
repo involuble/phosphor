@@ -1,3 +1,6 @@
 target/
 **/*.rs.bk
 render.png
+*.dll
+*.log
+src-old

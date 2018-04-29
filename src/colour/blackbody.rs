@@ -1,7 +1,25 @@
-// Temp should be roughly in range 1000K..40000K
+#![allow(dead_code)]
+
+use colour::rgb::*;
+use colour::srgb::*;
+
+use num_traits::*;
+
+pub struct Blackbody {
+    // Temperature in Kelvin
+    pub temp: f32
+}
+
+impl Blackbody {
+    pub fn colour(&self) -> RGB<Rec709> {
+        let (r, g, b) = blackbody_to_colour(self.temp);
+        sRGB::new(r, g, b).into()
+    }
+}
+
+// Temp should be roughly in range 1000K..40,000K
 fn blackbody_to_colour(temp: f32) -> (f32, f32, f32) {
     // See http://www.zombieprototypes.com/?p=210
-    //  & http://www.vendian.org/mncharity/dir3/blackbody/UnstableURLs/bbr_color.html
     let temp = clamp(temp, 1000.0, 40000.0);
     let red;
     if temp >= 6600.0 {
