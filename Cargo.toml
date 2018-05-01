@@ -8,7 +8,7 @@ A path tracer written in Rust
 """
 
 [dependencies]
-cgmath = "0.16"
+cgmath = { version = "0.16", features = ["serde"] }
 approx = "0.1.1"
 log = "0.4"
 fern = "0.5"
@@ -18,6 +18,9 @@ num-traits = "0.1.43"
 tobj = "0.1.6"
 vec_map = "0.8"
 serde = "1"
+serde_json = "1"
+serde_derive = "1.0"
+# bincode = "1.0"
 # state = "0.4"
 embree = { path = "../embree-rs" }
 

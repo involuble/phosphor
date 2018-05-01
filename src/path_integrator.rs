@@ -7,7 +7,7 @@ use colour::*;
 use camera::*;
 use render_buffer::*;
 use render_settings::*;
-use materials::*;
+use material::*;
 
 pub struct PathIntegrator {
     scene: Scene,

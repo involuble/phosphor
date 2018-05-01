@@ -22,6 +22,15 @@ struct Primitive {
     // pub normal_map: Texture,
 }
 
+impl Primitive {
+    pub fn new(material: Material) -> Self {
+        Primitive {
+            emitter: EmissiveGeometry::NotEmissive,
+            material: material,
+        }
+    }
+}
+
 enum EmissiveGeometry {
     NotEmissive,
     Sphere(Sphere),
@@ -63,7 +72,7 @@ impl Scene {
 }
 
 pub struct SceneBuilder {
-    device: embree::Device,
+    pub device: embree::Device,
     scene: embree::SceneBuilder,
     primitives: VecMap<Primitive>,
     skybox: Colour,
@@ -83,26 +92,57 @@ impl SceneBuilder {
         }
     }
 
-    pub fn add_emissive_sphere(&mut self, sphere: Sphere) {
-        debug_assert!(!sphere.emission.is_zero(), "Sphere is not emissive");
+    // pub fn add_emissive_sphere(&mut self, sphere: Sphere) {
+    //     debug_assert!(!sphere.emission.is_zero(), "Sphere is not emissive");
 
-        let user = embree::UserGeometry::new(&self.device, vec![sphere.clone()]);
-        let id = &self.scene.attach(user.build());
+    //     let user = embree::UserGeometry::new(&self.device, vec![sphere.clone()]);
+    //     let id = &self.scene.attach(user.build());
+    //     let prim = Primitive {
+    //         emitter: EmissiveGeometry::Sphere(sphere),
+    //         material: Material::None,
+    //     };
+    //     self.primitives.insert(id.unwrap() as usize, prim);
+    // }
+
+    pub fn add_sphere(&mut self, sphere: Sphere, material: Material) {
+        let emitter;
+        if sphere.is_emissive() {
+            emitter = EmissiveGeometry::Sphere(sphere.clone());
+        } else {
+            emitter = EmissiveGeometry::NotEmissive;
+        }
         let prim = Primitive {
-            emitter: EmissiveGeometry::Sphere(sphere),
-            material: Material::Emitter,
+            emitter: emitter,
+            material: material,
         };
+
+        let user = embree::UserGeometry::new(&self.device, vec![sphere]);
+        let id = &self.scene.attach(user.build());
         self.primitives.insert(id.unwrap() as usize, prim);
     }
 
-    pub fn add_sphere(&mut self, sphere: Sphere, mat: Material) {
-        let user = embree::UserGeometry::new(&self.device, vec![sphere]);
-        let id = &self.scene.attach(user.build());
+    pub fn add_quad(&mut self, quad: Quad, material: Material) {
+        let emitter;
+        // if quad.is_emissive() {
+        //     emitter = EmissiveGeometry::Quad(quad.clone());
+        // } else {
+            emitter = EmissiveGeometry::NotEmissive;
+        // }
         let prim = Primitive {
-            emitter: EmissiveGeometry::NotEmissive,
-            material: mat,
+            emitter: emitter,
+            material: material,
         };
+
+        let index = vec![embree::Quad::new(0, 1, 2, 3)];
+        let mesh = embree::QuadMesh::new(&self.device, index, Vec::from(quad.points().as_ref()));
+        let id = &self.scene.attach(mesh.build());
         self.primitives.insert(id.unwrap() as usize, prim);
+    }
+
+    pub fn add_mesh(&mut self, mesh: embree::TriangleMesh, material: Material) {
+        // TODO: Probably shouldn't expose embree like this
+        let id = &self.scene.attach(mesh.build());
+        self.primitives.insert(id.unwrap() as usize, Primitive::new(material));
     }
 
     pub fn build(self) -> Scene {

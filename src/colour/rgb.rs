@@ -14,6 +14,7 @@ pub trait ColourSpace: Debug + Clone + Copy {
 }
 
 #[derive(Debug, Copy, Clone)]
+/// The Rec. 709 or linear sRGB colour space
 pub struct Rec709 {}
 
 impl ColourSpace for Rec709 {
@@ -30,6 +31,7 @@ impl ColourSpace for Rec709 {
 #[derive(Debug, Copy, Clone)]
 // Can't derive these because of PhantomData
 // #[derive(Add, Mul, AddAssign, Div)]
+/// RGB colour vector in a particular colour space
 pub struct RGB<S: ColourSpace> {
     pub r: f32,
     pub g: f32,

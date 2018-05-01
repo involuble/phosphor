@@ -5,3 +5,11 @@ use colour::*;
 pub struct Lambert {
     pub albedo: Colour,
 }
+
+impl Lambert {
+    pub fn new(albedo: Colour) -> Self {
+        Lambert {
+            albedo: albedo,
+        }
+    }
+}

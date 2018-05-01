@@ -18,6 +18,10 @@ impl Sphere {
             emission: Colour::zero(),
         }
     }
+
+    pub fn is_emissive(&self) -> bool {
+        !self.emission.is_zero()
+    }
 }
 
 impl AreaLight for Sphere {
@@ -37,6 +41,17 @@ impl AreaLight for Sphere {
         // LightSample {
         //     radiance: self.emission,
         // }
+    }
+}
+
+impl Transformable for Sphere {
+    fn transform_by(&mut self, transform: &AffineTransform) {
+        // debug_assert!(transform.is_similarity(), "Can't transform sphere by non-uniform scale");
+        if !transform.is_similarity() {
+            warn!("Can't transform sphere by non-uniform scale");
+        }
+        self.center = transform.transform_point(self.center);
+        self.radius *= transform.scale.x;
     }
 }
 

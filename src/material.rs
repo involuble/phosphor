@@ -1,17 +1,18 @@
 use colour::*;
-use materials::*;
+
+pub use materials::*;
 
 #[derive(Debug, Clone)]
 pub enum Material {
-    Emitter,
+    None,
     Lambert(Lambert),
 }
 
 impl Bsdf for Material {
     fn albedo(&self) -> Colour {
         match *self {
-            Material::Emitter => Colour::new(1.0, 1.0, 1.0),
-            Material::Lambert(ref l) => l.albedo
+            Material::Lambert(ref l) => l.albedo,
+            Material::None => Colour::new(0.0, 0.0, 0.0),
         }
     }
 }

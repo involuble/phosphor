@@ -39,7 +39,7 @@ impl sRGB {
     }
 }
 
-// Takes a gamma corrected value in sRGB space and linearises it
+/// Takes a gamma corrected value in sRGB space and linearises it
 fn from_srgb(c: f32) -> f32 {
     if c <= 0.04045 {
         c / 12.92
@@ -53,11 +53,10 @@ fn from_srgb_approx(c_srgb: f32) -> f32 {
     c_srgb * (c_srgb * (c_srgb * 0.305306011 + 0.682171111) + 0.012522878)
 }
 
-// Takes a value in linear colour space and gamma corrects it to sRGB space.
-// The input c is a normalised (in [0,1]) float
+/// Takes a value in linear colour space and gamma corrects it to sRGB space.
+/// The input c is a normalised (in [0,1]) float
 fn to_srgb(c_linear: f32) -> f32 {
-    // let c = c_linear;
-    let c = clamp(NumCast::from(c_linear).unwrap(), 0.0, 1.0);
+    let c = clamp(c_linear, 0.0, 1.0);
     if c < 0.0031308 {
         12.92 * c
     } else {
@@ -67,7 +66,7 @@ fn to_srgb(c_linear: f32) -> f32 {
 }
 
 fn to_srgb_approx(c_linear: f32) -> f32 {
-    let c_linear = clamp(NumCast::from(c_linear).unwrap(), 0.0, 1.0);
+    let c_linear = clamp(c_linear, 0.0, 1.0);
     let s1 = c_linear.sqrt();
     let s2 = s1.sqrt();
     let s3 = s2.sqrt();

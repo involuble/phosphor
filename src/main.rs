@@ -10,6 +10,10 @@ extern crate rand;
 extern crate tobj;
 extern crate vec_map;
 extern crate embree;
+extern crate serde;
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
 
 mod math;
 mod colour;
@@ -23,19 +27,53 @@ mod camera;
 mod render_buffer;
 mod tonemap;
 mod render_settings;
+mod tungsten_scene;
+mod tungsten_scene_convert;
 
-use cgmath::*;
+use std::error::Error;
+use std::fs::File;
+use std::path::Path;
+use std::time::Instant;
 
-use geometry::*;
 use scene::*;
-use colour::*;
-use material::*;
-use materials::*;
-use camera::*;
-// use math::*;
 use path_integrator::*;
 use render_buffer::*;
 use render_settings::*;
+
+fn load_scene<P: AsRef<Path>>(path: P) -> Result<tungsten_scene::SceneDescription, Box<Error>> {
+    let file = File::open(path)?;
+
+    let s = serde_json::from_reader(file)?;
+    Ok(s)
+}
+
+fn format_error(err: Box<Error>) -> String {
+    let mut acc_str = err.to_string();
+    let mut prev = err.as_ref();
+    while let Some(next) = prev.cause() {
+        acc_str.push_str(": ");
+        acc_str.push_str(&next.to_string());
+        prev = next;
+    }
+    acc_str
+}
+
+fn pretty_duration(d: ::std::time::Duration) -> String {
+    let minutes = d.as_secs() / 60;
+    let sec = d.as_secs() % 60;
+    let millis = d.subsec_nanos() / 1_000_000;
+    let pretty;
+    if minutes > 30 {
+        let hours = minutes / 60;
+        let minutes = minutes % 60;
+        pretty = format!("{:02}h{:02}m", hours, minutes);
+    } else if minutes > 0 {
+        pretty = format!("{}m{}s", minutes, sec);
+    } else {
+        pretty = format!("{}.{:03}s", sec, millis);
+    }
+    pretty
+}
 
 fn main() {
     fern::Dispatch::new()
@@ -49,38 +87,28 @@ fn main() {
 
     let mut scene_builder = SceneBuilder::new(&device);
 
-    let s1 = Sphere {
-        center: Point3::new(0.0, 1.0, 0.0),
-        radius: 1.0,
-        emission: Colour::zero(),
-    };
+    let scene_desc = load_scene("scenes/cornell_box_sphere_light.json").expect("could not load scene");
 
-    let s2 = Sphere {
-        center: Point3::new(-3.0, 0.0, 0.0),
-        radius: 0.8,
-        emission: Colour::new(1.5, 1.5, 1.5),
-    };
+    let camera = scene_desc.build_camera();
 
-    scene_builder.add_sphere(s1, Material::Lambert(Lambert { albedo: Colour::new(1.0, 0.0, 0.0)}));
+    scene_desc.add_primitives(&mut scene_builder);
 
-    scene_builder.add_emissive_sphere(s2);
-
-    let camera_pos = Point3::new(3.0, 4.0, 6.0);
-    let camera = Camera::new(camera_pos, Point3::new(0.0, 0.0, 0.0), Vector3::unit_y(), Deg(60.0), 320.0 / 240.0);
-
-    let mut render_buffer = RenderBuffer::new(320, 240);
+    let (width, height) = scene_desc.resolution();
+    let mut render_buffer = RenderBuffer::new(width, height);
 
     let path_integrator = PathIntegrator::new(scene_builder.build(), &RenderSettings::default());
+    let render_start = Instant::now();
     path_integrator.render(&camera, &mut render_buffer);
+    println!("Time taken for rendering: {}", pretty_duration(Instant::now() - render_start));
 
     let image = render_buffer.resolve();
 
-    let image_buf = image.to_ldr();
+    let image_ldr = image.to_ldr();
 
     let path = std::path::Path::new("render.png");
     let saved = image::save_buffer(
         path,
-        image_buf.as_ref(),
+        image_ldr.as_ref(),
         image.width,
         image.height,
         image::RGB(8),
