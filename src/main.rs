@@ -47,7 +47,8 @@ fn load_scene<P: AsRef<Path>>(path: P) -> Result<tungsten_scene::SceneDescriptio
     Ok(s)
 }
 
-fn format_error(err: Box<Error>) -> String {
+#[allow(dead_code)]
+fn display_error(err: Box<Error>) -> String {
     let mut acc_str = err.to_string();
     let mut prev = err.as_ref();
     while let Some(next) = prev.cause() {
@@ -82,12 +83,14 @@ fn main() {
         // .chain(fern::log_file("render_log.log").expect("Unable to open log file"))
         .apply()
         .expect("Unable to initialize logger");
+
+    let build_start = Instant::now();
     
     let device = embree::Device::new();
 
     let mut scene_builder = SceneBuilder::new(&device);
 
-    let scene_desc = load_scene("scenes/cornell_box_sphere_light.json").expect("could not load scene");
+    let scene_desc = load_scene("scenes/cornell_box_spheres.json").expect("could not load scene");
 
     let camera = scene_desc.build_camera();
 
@@ -96,10 +99,13 @@ fn main() {
     let (width, height) = scene_desc.resolution();
     let mut render_buffer = RenderBuffer::new(width, height);
 
+    let _settings = scene_desc.render_settings();
+
     let path_integrator = PathIntegrator::new(scene_builder.build(), &RenderSettings::default());
+    println!("{:>16} took: {}", "Scene building", pretty_duration(Instant::now() - build_start));
     let render_start = Instant::now();
     path_integrator.render(&camera, &mut render_buffer);
-    println!("Time taken for rendering: {}", pretty_duration(Instant::now() - render_start));
+    println!("{:>16} took: {}", "Rendering", pretty_duration(Instant::now() - render_start));
 
     let image = render_buffer.resolve();
 

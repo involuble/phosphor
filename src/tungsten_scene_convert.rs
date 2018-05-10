@@ -9,6 +9,7 @@ use material::*;
 
 use scene::SceneBuilder;
 use camera::Camera;
+use render_settings::{RenderSettings};
 
 use tungsten_scene;
 
@@ -89,25 +90,35 @@ impl tungsten_scene::SceneDescription {
         (self.camera.resolution[0], self.camera.resolution[1])
     }
 
+    pub fn render_settings(&self) -> RenderSettings {
+        RenderSettings {
+            spp: self.renderer.spp,
+            max_depth: self.integrator.max_bounces,
+        }
+    }
+
     pub fn add_primitives(&self, scene: &mut SceneBuilder) {
         let mut materials = HashMap::new();
+
         for bsdf in &self.bsdfs {
             let m = match bsdf.bsdf_type.as_ref() {
                 "lambert" => {
-                    Material::Lambert(Lambert::new(val_to_colour(bsdf.albedo)))
+                    MaterialType::Diffuse(Lambert::new(val_to_colour(bsdf.albedo)))
                 },
-                "null" => Material::None,
+                "null" => MaterialType::Diffuse(Lambert::new(Colour::zero())),
                 b => {
                     warn!("Unknown BSDF type: {}", b);
-                    Material::None
+                    MaterialType::Diffuse(Lambert::new(Colour::zero()))
                 },
             };
             materials.insert(bsdf.name.clone(), m);
         }
         for prim in &self.primitives {
             let mat = materials.get(&prim.bsdf).expect("Undeclared material");
+
             let transform = prim.transform.to_affine_transform();
             let emission = if let Some(e) = prim.emission { val_to_colour(e) } else { Colour::zero() };
+
             match prim.primitive_type.as_ref() {
                 "sphere" => {
                     let mut sphere = Sphere::unit();

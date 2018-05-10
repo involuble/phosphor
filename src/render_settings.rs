@@ -9,7 +9,7 @@ pub struct RenderSettings {
 impl Default for RenderSettings {
     fn default() -> Self {
         RenderSettings {
-            spp: 16,
+            spp: 8,
             max_depth: 4,
         }
     }

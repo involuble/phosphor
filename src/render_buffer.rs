@@ -24,7 +24,7 @@ impl RenderBuffer {
             // debug_assert!(pixel.sample_count > 0.0);
             let mut colour = Colour::zero();
             if pixel.sample_count > 0.0 {
-                colour += pixel.colour_sum / pixel.sample_count;
+                colour = pixel.colour_sum / pixel.sample_count;
             }
             v.push(colour);
         }

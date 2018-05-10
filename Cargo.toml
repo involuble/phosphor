@@ -34,5 +34,6 @@ opt-level = 2
 #lto = true
 #opt-level = 3
 #codegen-units = 1
+#debug = true
 #panic = 'abort'
 #panic = 'unwind'

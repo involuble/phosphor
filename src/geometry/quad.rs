@@ -1,6 +1,6 @@
 use math::*;
 use colour::*;
-use geometry::{AreaLight, LightSample};
+// use geometry::{AreaLight, LightSample};
 
 pub struct Quad {
     p0: Point3<f32>,

@@ -27,9 +27,9 @@ impl Ray {
         self.origin + t*self.dir
     }
 
-    // Offset the ray away from its origin. This is to avoid precision issues
-    pub fn offset_origin(&mut self, offset_dir: Vector3<f32>) {
-        unimplemented!()
+    /// Offset the ray away from its origin. This is to avoid precision issues
+    pub fn offset(&mut self, offset_dir: Vector3<f32>) {
+        self.origin += offset_dir * EPSILON;
     }
 }
 

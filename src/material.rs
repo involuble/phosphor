@@ -1,18 +1,18 @@
-use colour::*;
+use embree;
+
+// use colour::*;
 
 pub use materials::*;
 
 #[derive(Debug, Clone)]
-pub enum Material {
-    None,
-    Lambert(Lambert),
+pub enum MaterialType {
+    Diffuse(Lambert),
 }
 
-impl Bsdf for Material {
-    fn albedo(&self) -> Colour {
+impl Material for MaterialType {
+    fn compute_bsdf(&self, _hit: &embree::Hit) -> Box<Bsdf> {
         match *self {
-            Material::Lambert(ref l) => l.albedo,
-            Material::None => Colour::new(0.0, 0.0, 0.0),
+            MaterialType::Diffuse(ref l) => Box::new(l.clone()),
         }
     }
 }

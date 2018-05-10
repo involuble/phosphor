@@ -40,7 +40,7 @@ impl sRGB {
 }
 
 /// Takes a gamma corrected value in sRGB space and linearises it
-fn from_srgb(c: f32) -> f32 {
+fn srgb_to_linear(c: f32) -> f32 {
     if c <= 0.04045 {
         c / 12.92
     } else {
@@ -49,13 +49,13 @@ fn from_srgb(c: f32) -> f32 {
     }
 }
 
-fn from_srgb_approx(c_srgb: f32) -> f32 {
+fn srgb_to_linear_approx(c_srgb: f32) -> f32 {
     c_srgb * (c_srgb * (c_srgb * 0.305306011 + 0.682171111) + 0.012522878)
 }
 
 /// Takes a value in linear colour space and gamma corrects it to sRGB space.
 /// The input c is a normalised (in [0,1]) float
-fn to_srgb(c_linear: f32) -> f32 {
+fn linear_to_srgb(c_linear: f32) -> f32 {
     let c = clamp(c_linear, 0.0, 1.0);
     if c < 0.0031308 {
         12.92 * c
@@ -65,12 +65,15 @@ fn to_srgb(c_linear: f32) -> f32 {
     }
 }
 
-fn to_srgb_approx(c_linear: f32) -> f32 {
+fn linear_to_srgb_approx(c_linear: f32) -> f32 {
+    // See: https://chilliant.blogspot.ca/2012/08/srgb-approximations-for-hlsl.html
     let c_linear = clamp(c_linear, 0.0, 1.0);
-    let s1 = c_linear.sqrt();
-    let s2 = s1.sqrt();
-    let s3 = s2.sqrt();
-    0.662002687 * s1 + 0.684122060 * s2 - 0.323583601 * s3 - 0.0225411470 * c_linear
+    // let s1 = c_linear.sqrt();
+    // let s2 = s1.sqrt();
+    // let s3 = s2.sqrt();
+    // let c = 0.662002687 * s1 + 0.684122060 * s2 - 0.323583601 * s3 - 0.0225411470 * c_linear;
+    let c = 1.055 * c_linear.powf(0.416666667) - 0.055;
+    c.max(0.0)
 }
 
 fn u8_to_float(i: u8) -> f32 {
@@ -83,24 +86,45 @@ fn float_to_u8(f: f32) -> u8 {
 
 impl From<RGB<Rec709>> for sRGB {
     fn from(rgb: RGB<Rec709>) -> Self {
-        sRGB {
-            r: to_srgb_approx(rgb.r),
-            g: to_srgb_approx(rgb.g),
-            b: to_srgb_approx(rgb.b),
-        }
+        sRGB::new(
+            linear_to_srgb_approx(rgb.r),
+            linear_to_srgb_approx(rgb.g),
+            linear_to_srgb_approx(rgb.b))
     }
 }
 
 impl From<sRGB> for RGB<Rec709> {
     fn from(rgb: sRGB) -> Self {
-        RGB::new(from_srgb_approx(rgb.r), from_srgb_approx(rgb.g), from_srgb_approx(rgb.b))
+        RGB::new(
+            srgb_to_linear_approx(rgb.r),
+            srgb_to_linear_approx(rgb.g),
+            srgb_to_linear_approx(rgb.b))
     }
+}
+
+#[cfg(test)]
+fn rgb_round_trip(rgb: [u8; 3], dist: i32) {
+    let srgb = sRGB::from_rgb8(rgb);
+    let linear = RGB::from(srgb);
+    let srgb_out = sRGB::from(linear);
+    let rgb_out = srgb_out.to_rgb8();
+    let diff = ((rgb[0] as i32) - (rgb_out[0] as i32)).abs();
+    assert!(diff <= dist, "sRGB conversion too inaccurate: initial = {:?}, converted = {:?}", rgb, rgb_out);
 }
 
 #[test]
 fn test_round_trip() {
-    let rgb = [45, 27, 122];
-    let srgb = sRGB::from_rgb8(rgb);
-    let rgb_out = srgb.to_rgb8();
-    assert_eq!(rgb, rgb_out);
+    for i in 0..15 {
+        let rgb = [i, i, i];
+        rgb_round_trip(rgb, 8);
+    }
+    for i in 15..40 {
+        let rgb = [i, i, i];
+        rgb_round_trip(rgb, 5);
+    }
+    for i in 40..=255 {
+        let rgb = [i, i, i];
+        rgb_round_trip(rgb, 1);
+    }
+    rgb_round_trip([45, 27, 122], 3);
 }

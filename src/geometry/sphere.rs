@@ -1,7 +1,9 @@
+use rand::{Rng, IsaacRng};
+
 use math::*;
 use embree::*;
 use colour::*;
-use geometry::{AreaLight, LightSample};
+use geometry::{SampleableEmitter, LightSample};
 
 #[derive(Debug, Clone)]
 pub struct Sphere {
@@ -24,23 +26,50 @@ impl Sphere {
     }
 }
 
-impl AreaLight for Sphere {
+impl SampleableEmitter for Sphere {
     fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample {
         let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
         let pdf = 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
         LightSample {
-            direction: p - initial,
+            dir: p - initial,
+            distance: (p - initial).magnitude(),
             radiance: self.emission,
             pdf: PdfW(pdf),
         }
     }
 
-    fn sample(&self, initial: Point3<f32>) -> LightSample {
-        unimplemented!()
-        // LightSample {
-        //     radiance: self.emission,
-        // }
+    fn sample(&self, rng: &mut IsaacRng, initial: Point3<f32>) -> LightSample {
+        let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
+        assert!(sin_theta_max2 <= 1.0 && sin_theta_max2 >= 0.0);
+        let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
+
+        // Cone sampling
+        let u1 = rng.next_f32();
+        let u2 = rng.next_f32();
+
+        let cos_theta = (1.0 - u1) + u1*cos_theta_max;
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+        let phi = 2.0 * PI * u2;
+
+        let v = polar_to_cartesian(sin_theta, cos_theta, phi);
+
+        let to = (self.center - initial).normalize();
+        let (cone_x, cone_y) = make_orthonormal_basis(to);
+
+        let d = v.x * cone_x + v.y * cone_y + v.z * to;
+        assert_relative_eq!(d.magnitude(), 1.0, epsilon=EPSILON);
+
+        LightSample {
+            dir: d.normalize(),
+            distance: ::std::f32::MAX,
+            radiance: self.emission,
+            pdf: PdfW(1.0 / (2.0 * PI * (1.0 - cos_theta_max))),
+        }
+    }
+
+    fn surface_area(&self) -> f32 {
+        4.0 * PI * self.radius * self.radius
     }
 }
 

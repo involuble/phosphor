@@ -1,19 +1,16 @@
 #![allow(non_camel_case_types)]
 
 use std::ops::*;
-use std::fmt::Debug;
+use std::fmt;
 use std::marker::PhantomData;
 
 use num_traits::{Zero};
 
-// The debug, copy, clone bounds are a bit of a hack
-// They're needed to make derive work on RGB
-pub trait ColourSpace: Debug + Clone + Copy {
+pub trait ColourSpace {
     const NAME: &'static str;
     const XYZ_TO_RGB: [f32; 9];
 }
 
-#[derive(Debug, Copy, Clone)]
 /// The Rec. 709 or linear sRGB colour space
 pub struct Rec709 {}
 
@@ -27,11 +24,9 @@ impl ColourSpace for Rec709 {
     ];
 }
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-// Can't derive these because of PhantomData
-// #[derive(Add, Mul, AddAssign, Div)]
 /// RGB colour vector in a particular colour space
+#[repr(C)]
+// #[derive(Add, Mul, AddAssign, Div)] // Can't derive these because of PhantomData
 pub struct RGB<S: ColourSpace> {
     pub r: f32,
     pub g: f32,
@@ -51,17 +46,33 @@ impl<S: ColourSpace> RGB<S> {
         }
     }
 
+    pub fn is_nan(&self) -> bool {
+        self.r.is_nan() | self.g.is_nan() | self.b.is_nan()
+    }
+
     // pub fn black() -> Self {
     //     Self::zero()
     // }
 }
 
-// impl<S: ColourSpace> Copy for RGB<S> {}
-// impl<S: ColourSpace> Clone for RGB<S> {
-//     fn clone(&self) -> Self {
-//         RGB::new(self.r, self.g, self.b)
-//     }
-// }
+impl<S: ColourSpace> Copy for RGB<S> {}
+impl<S: ColourSpace> Clone for RGB<S> {
+    fn clone(&self) -> Self {
+        RGB::new(self.r, self.g, self.b)
+    }
+}
+
+impl<S: ColourSpace> fmt::Debug for RGB<S> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({:?},{:?},{:?})", self.r, self.g, self.b)
+    }
+}
+
+impl<S: ColourSpace> fmt::Display for RGB<S> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({},{},{})", self.r, self.g, self.b)
+    }
+}
 
 impl<S: ColourSpace> Zero for RGB<S> {
     fn zero() -> Self {
@@ -81,6 +92,14 @@ impl<S: ColourSpace> Mul<RGB<S>> for RGB<S> {
     }
 }
 
+impl<S: ColourSpace> Mul<RGB<S>> for f32 {
+    type Output = RGB<S>;
+
+    fn mul(self, rhs: RGB<S>) -> Self::Output {
+        RGB::new(self * rhs.r, self * rhs.g, self * rhs.b)
+    }
+}
+
 impl<S: ColourSpace> MulAssign<RGB<S>> for RGB<S> {
     fn mul_assign(&mut self, rhs: RGB<S>) {
         *self = *self * rhs;
@@ -93,6 +112,12 @@ impl<S: ColourSpace> Add<RGB<S>> for RGB<S> {
 
     fn add(self, rhs: RGB<S>) -> Self::Output {
         RGB::new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
+    }
+}
+
+impl<S: ColourSpace> AddAssign<RGB<S>> for RGB<S> {
+    fn add_assign(&mut self, rhs: RGB<S>) {
+        *self = *self + rhs;
     }
 }
 
@@ -110,11 +135,5 @@ impl<S: ColourSpace> Div<f32> for RGB<S> {
     fn div(self, rhs: f32) -> Self::Output {
         let inv = 1.0 / rhs;
         RGB::new(self.r * inv, self.g * inv, self.b * inv)
-    }
-}
-
-impl<S: ColourSpace> AddAssign<RGB<S>> for RGB<S> {
-    fn add_assign(&mut self, rhs: RGB<S>) {
-        *self = *self + rhs;
     }
 }
