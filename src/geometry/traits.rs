@@ -3,7 +3,7 @@ use rand::{IsaacRng};
 use math::*;
 use colour::*;
 
-pub trait SampleableEmitter {
+pub trait SampleableEmitter: Send + Sync {
     fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample;
     fn sample(&self, rng: &mut IsaacRng, initial: Point3<f32>) -> LightSample;
 

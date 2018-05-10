@@ -5,7 +5,7 @@
             "name": "LeftWall",
             "albedo": [
                 0.8,
-                0.0,
+                0.4,
                 0.0
             ],
             "type": "lambert"
@@ -14,7 +14,7 @@
             "name": "RightWall",
             "albedo": [
                 0.0,
-                0.0,
+                0.4,
                 0.8
             ],
             "type": "lambert"

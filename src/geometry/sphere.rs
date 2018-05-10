@@ -26,6 +26,18 @@ impl Sphere {
     }
 }
 
+fn sample_cone(rng: &mut IsaacRng, cos_theta_max: f32) -> Vector3<f32> {
+    let u1 = rng.next_f32();
+    let u2 = rng.next_f32();
+
+    let cos_theta = (1.0 - u1) + u1*cos_theta_max;
+    let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+    let phi = 2.0 * PI * u2;
+
+    let v = polar_to_cartesian(sin_theta, cos_theta, phi);
+    v
+}
+
 impl SampleableEmitter for Sphere {
     fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample {
         let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
@@ -44,15 +56,7 @@ impl SampleableEmitter for Sphere {
         assert!(sin_theta_max2 <= 1.0 && sin_theta_max2 >= 0.0);
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
 
-        // Cone sampling
-        let u1 = rng.next_f32();
-        let u2 = rng.next_f32();
-
-        let cos_theta = (1.0 - u1) + u1*cos_theta_max;
-        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
-        let phi = 2.0 * PI * u2;
-
-        let v = polar_to_cartesian(sin_theta, cos_theta, phi);
+        let v = sample_cone(rng, cos_theta_max);
 
         let to = (self.center - initial).normalize();
         let (cone_x, cone_y) = make_orthonormal_basis(to);
@@ -62,7 +66,7 @@ impl SampleableEmitter for Sphere {
 
         LightSample {
             dir: d.normalize(),
-            distance: ::std::f32::MAX,
+            distance: ::std::f32::MAX, // TODO
             radiance: self.emission,
             pdf: PdfW(1.0 / (2.0 * PI * (1.0 - cos_theta_max))),
         }

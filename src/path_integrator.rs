@@ -1,5 +1,6 @@
 use rand::{Rng, IsaacRng, SeedableRng};
 use embree::{Hit};
+use rayon::prelude::*;
 
 use math::*;
 use geometry::*;
@@ -29,7 +30,7 @@ impl PathIntegrator {
         let inv_w = 1.0 / (render_buffer.width as f32);
         let inv_h = 1.0 / (render_buffer.height as f32);
 
-        render_buffer.data.iter_mut().enumerate().for_each(|(index, pixel)| {
+        render_buffer.data.par_iter_mut().enumerate().for_each(|(index, pixel)| {
             let x_i = (index as u32) % width;
             let y_i = (index as u32) / width;
             // if !(x_i == 331 && y_i == 389) { return; }
