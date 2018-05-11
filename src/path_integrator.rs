@@ -33,7 +33,7 @@ impl PathIntegrator {
         render_buffer.data.par_iter_mut().enumerate().for_each(|(index, pixel)| {
             let x_i = (index as u32) % width;
             let y_i = (index as u32) / width;
-            // if !(x_i == 331 && y_i == 389) { return; }
+            // if !(x_i == 505 && y_i == 90) { return; }
             let x = (x_i as f32) * inv_w;
             let y = (y_i as f32) * inv_h;
 
@@ -45,8 +45,11 @@ impl PathIntegrator {
                 let offset_y = r2 * inv_h;
 
                 let camera_ray = camera.get_ray(x + offset_x, y + offset_y);
-                let radiance = self.radiance(&camera_ray, &mut rng);
-                debug_assert!(!radiance.is_nan(), "Colour should not be NaN");
+                let mut radiance = self.radiance(&camera_ray, &mut rng);
+                if radiance.is_nan() {
+                    warn!("NaN colour at pixel ({},{})", x_i, y_i);
+                    radiance = Colour::new(1.0, 0.4, 0.7); // A vibrant pink colour
+                }
                 pixel.add_sample(radiance);
             }
         })
@@ -100,7 +103,14 @@ impl PathIntegrator {
             return Colour::zero();
         }
 
-        let (light_id, ref light) = self.scene.lights[0];
+        // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
+        fn rand_select<'a, T>(vec: &'a Vec<T>, rand: u32) -> &'a T {
+            let i = ((vec.len() as u64) * (rand as u64)) >> 32;
+            &vec[i as usize]
+        };
+
+        let (light_id, light) = rand_select(&self.scene.lights, rng.next_u32());
+        let light_id = *light_id;
 
         if hit.geom_id == light_id {
             return Colour::zero();
@@ -110,7 +120,7 @@ impl PathIntegrator {
         let light_sample = light.sample(rng, hit_p);
 
         let n_dot_l = dot(shading.basis.normal, light_sample.dir);
-        if n_dot_l > EPSILON {
+        if n_dot_l > EPSILON && light_sample.pdf.0 > EPSILON {
             let mut light_ray = Ray::new(hit_p, light_sample.dir, light_sample.distance);
             light_ray.offset(hit.Ng);
             let light_hit = self.scene.intersect(&light_ray);

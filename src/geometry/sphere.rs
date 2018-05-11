@@ -39,13 +39,15 @@ fn sample_cone(rng: &mut IsaacRng, cos_theta_max: f32) -> Vector3<f32> {
 }
 
 impl SampleableEmitter for Sphere {
-    fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample {
+    fn eval_emission_at(&self, initial: Point3<f32>, _p: Point3<f32>) -> LightSample {
         let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
         let pdf = 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
         LightSample {
-            dir: p - initial,
-            distance: (p - initial).magnitude(),
+            // dir: (p - initial).normalize(),
+            // distance: (p - initial).magnitude(),
+            dir: Vector3::zero(), // Questionable but nothing uses them so far
+            distance: ::std::f32::MAX,
             radiance: self.emission,
             pdf: PdfW(pdf),
         }
@@ -53,7 +55,7 @@ impl SampleableEmitter for Sphere {
 
     fn sample(&self, rng: &mut IsaacRng, initial: Point3<f32>) -> LightSample {
         let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
-        assert!(sin_theta_max2 <= 1.0 && sin_theta_max2 >= 0.0);
+        debug_assert!(sin_theta_max2 <= 1.0 && sin_theta_max2 >= 0.0);
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
 
         let v = sample_cone(rng, cos_theta_max);
@@ -62,10 +64,10 @@ impl SampleableEmitter for Sphere {
         let (cone_x, cone_y) = make_orthonormal_basis(to);
 
         let d = v.x * cone_x + v.y * cone_y + v.z * to;
-        assert_relative_eq!(d.magnitude(), 1.0, epsilon=EPSILON);
+        debug_assert!(relative_eq!(d.magnitude(), 1.0, epsilon=EPSILON));
 
         LightSample {
-            dir: d.normalize(),
+            dir: d,
             distance: ::std::f32::MAX, // TODO
             radiance: self.emission,
             pdf: PdfW(1.0 / (2.0 * PI * (1.0 - cos_theta_max))),

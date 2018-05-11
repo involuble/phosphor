@@ -2,7 +2,7 @@ use embree;
 
 // use colour::*;
 
-pub use materials::*;
+use materials::*;
 
 #[derive(Debug, Clone)]
 pub enum MaterialType {

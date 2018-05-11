@@ -5,7 +5,8 @@ use embree;
 use math::*;
 use colour::*;
 use geometry::*;
-use material::*;
+use materials::*;
+use material_type::*;
 
 use scene::SceneBuilder;
 use camera::Camera;
@@ -29,13 +30,11 @@ fn val_to_vec3(v: tungsten_scene::VectorValue) -> Vector3<f32> {
 
 impl tungsten_scene::Transform {
     pub fn to_affine_transform(&self) -> AffineTransform {
-        let euler = Euler {
-            x: Deg(self.rotation[0]),
-            y: Deg(self.rotation[1]),
-            z: Deg(self.rotation[2]),
-        };
+        let x = Matrix3::from_axis_angle(Vector3::unit_x(), Deg(self.rotation[0]));
+        let y = Matrix3::from_axis_angle(Vector3::unit_y(), Deg(self.rotation[1]));
+        let z = Matrix3::from_axis_angle(Vector3::unit_z(), Deg(self.rotation[2]));
         AffineTransform {
-            rotation: Quaternion::from(euler),
+            rotation: y * x * z,
             scale: val_to_vec3(self.scale),
             translation: Vector3::from(self.position),
         }
@@ -128,11 +127,12 @@ impl tungsten_scene::SceneDescription {
                 },
                 "quad" => {
                     let mut quad = Quad::new(
-                        Point3::new( 0.5, 0.0,  0.5),
-                        Point3::new( 0.5, 0.0, -0.5),
                         Point3::new(-0.5, 0.0, -0.5),
+                        Point3::new( 0.5, 0.0, -0.5),
+                        Point3::new( 0.5, 0.0,  0.5),
                         Point3::new(-0.5, 0.0,  0.5));
                     quad.transform_by(&transform);
+                    quad.emission = emission;
                     scene.add_quad(quad, mat.clone());
                 }
                 "cube" => {

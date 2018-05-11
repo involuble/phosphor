@@ -21,7 +21,7 @@ mod colour;
 mod geometry;
 mod materials;
 
-mod material;
+mod material_type;
 mod scene;
 mod path_integrator;
 mod camera;
@@ -92,6 +92,7 @@ fn main() {
     let mut scene_builder = SceneBuilder::new(&device);
 
     let scene_desc = load_scene("scenes/cornell_box_spheres.json").expect("could not load scene");
+    // let scene_desc = load_scene("scenes/tungsten/cornell-box/scene.json").expect("could not load scene");
 
     let camera = scene_desc.build_camera();
 
@@ -100,9 +101,10 @@ fn main() {
     let (width, height) = scene_desc.resolution();
     let mut render_buffer = RenderBuffer::new(width, height);
 
-    let _settings = scene_desc.render_settings();
+    // let settings = scene_desc.render_settings();
+    let settings = RenderSettings::default();
 
-    let path_integrator = PathIntegrator::new(scene_builder.build(), &RenderSettings::default());
+    let path_integrator = PathIntegrator::new(scene_builder.build(), &settings);
     println!("{:>16} took: {}", "Scene building", pretty_duration(Instant::now() - build_start));
     let render_start = Instant::now();
     path_integrator.render(&camera, &mut render_buffer);

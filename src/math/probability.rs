@@ -1,21 +1,21 @@
+use super::prelude::{EPSILON};
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PdfW(pub f32);
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct PdfA(f32);
+pub struct PdfA(pub f32);
 
 impl PdfA {
-    // pub fn to_pdf_solid_angle(&self, dist_sq: f32, cos_theta: f32, surface_area: f32) -> PdfW {
-    //     debug_assert!(surface_area > EPSILON);
-    //     let abs_cos = cos_theta.abs();
-    //     if abs_cos <= 0.0 {
-    //         return PdfW(0.0)
-    //     }
-    //     // TODO: I don't think this is quite right
-    //     PdfW(self.0 * dist_sq / (abs_cos * surface_area))
-    // }
+    pub fn to_pdfw(&self, dist_sq: f32, cos_theta: f32) -> PdfW {
+        let abs_cos = cos_theta.abs();
+        if abs_cos <= EPSILON {
+            return PdfW(0.0)
+        }
+        PdfW(self.0 * dist_sq / abs_cos)
+    }
 }
 
 pub trait MIS {

@@ -5,7 +5,8 @@ use vec_map::VecMap;
 
 use math::*;
 use colour::*;
-use material::*;
+use material_type::*;
+use materials::*;
 use geometry::*;
 
 pub struct Scene {
@@ -36,6 +37,7 @@ impl Primitive {
 pub enum EmissiveGeometry {
     NotEmissive,
     Sphere(Sphere),
+    Quad(Quad),
 }
 
 pub struct ShadingParameters {
@@ -55,14 +57,15 @@ impl Scene {
     pub fn emission_at(&self, ray: &Ray, hit: &Hit) -> LightSample {
         let p = ray.point_at_dist(hit.t);
         let e = &self.primitives[hit.geom_id.unwrap() as usize].emitter;
-        match *e {
+        match e {
             EmissiveGeometry::NotEmissive => LightSample {
                 dir: Vector3::zero(),
                 distance: 0.0,
                 radiance: Colour::zero(),
                 pdf: PdfW(1.0),
             },
-            EmissiveGeometry::Sphere(ref s) => s.eval_emission_at(ray.origin, p)
+            EmissiveGeometry::Sphere(s) => s.eval_emission_at(ray.origin, p),
+            EmissiveGeometry::Quad(q) => q.eval_emission_at(ray.origin, p),
         }
     }
     
@@ -119,11 +122,11 @@ impl SceneBuilder {
 
     pub fn add_quad(&mut self, quad: Quad, material: MaterialType) {
         let emitter;
-        // if quad.is_emissive() {
-        //     emitter = EmissiveGeometry::Quad(quad.clone());
-        // } else {
+        if quad.is_emissive() {
+            emitter = EmissiveGeometry::Quad(quad.clone());
+        } else {
             emitter = EmissiveGeometry::NotEmissive;
-        // }
+        }
         let prim = Primitive {
             emitter: emitter,
             material: material,
@@ -131,8 +134,11 @@ impl SceneBuilder {
 
         let index = vec![embree::Triangle::new(0, 1, 2), embree::Triangle::new(0, 2, 3)];
         let mesh = embree::TriangleMesh::new(&self.device, index, Vec::from(quad.points().as_ref()));
-        let id = &self.scene.attach(mesh.build());
+        let id = self.scene.attach(mesh.build());
         self.primitives.insert(id.unwrap() as usize, prim);
+        if quad.is_emissive() {
+            self.lights.push((id, Box::new(quad)));
+        }
     }
 
     pub fn add_mesh(&mut self, mesh: embree::TriangleMesh, material: MaterialType) {

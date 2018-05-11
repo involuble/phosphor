@@ -3,4 +3,6 @@ target/
 render.png
 *.dll
 *.log
+*.cxl
+scenes/tungsten
 src-old
