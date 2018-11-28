@@ -1,8 +1,7 @@
-use rand::{Rng, IsaacRng};
-
 use super::bsdf::*;
 use colour::*;
 use math::*;
+use sampling::*;
 
 #[derive(Debug, Clone)]
 pub struct Lambert {
@@ -17,11 +16,11 @@ impl Lambert {
     }
 }
 
-fn sample_cos_hempisphere(rng: &mut IsaacRng) -> (Vector3<f32>, f32) {
-    let u1 = rng.next_f32();
-    let u2 = rng.next_f32();
+fn sample_cos_hempisphere<R: Rng>(rng: &mut R) -> (Vector3<f32>, f32) {
+    let u1: f32 = rng.gen();
+    let u2: f32 = rng.gen();
 
-    let r = u1.sqrt();
+    let r: f32 = u1.sqrt();
     let theta = 2.0 * PI * u2;
 
     let c_t = theta.cos();
@@ -33,7 +32,7 @@ fn sample_cos_hempisphere(rng: &mut IsaacRng) -> (Vector3<f32>, f32) {
 }
 
 impl Bsdf for Lambert {
-    fn sample(&self, rng: &mut IsaacRng, basis: &TangentFrame, _w_i: Vector3<f32>) -> BsdfSample {
+    fn sample(&self, rng: &mut SampleRng, basis: &TangentFrame, _w_i: Vector3<f32>) -> BsdfSample {
         let (w_o_local, z) = sample_cos_hempisphere(rng);
         BsdfSample {
             reflectance: self.albedo * INV_PI,

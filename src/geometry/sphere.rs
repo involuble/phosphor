@@ -1,9 +1,8 @@
-use rand::{Rng, IsaacRng};
-
 use math::*;
 use embree::*;
 use colour::*;
 use geometry::{SampleableEmitter, LightSample};
+use sampling::*;
 
 #[derive(Debug, Clone)]
 pub struct Sphere {
@@ -26,9 +25,9 @@ impl Sphere {
     }
 }
 
-fn sample_cone(rng: &mut IsaacRng, cos_theta_max: f32) -> Vector3<f32> {
-    let u1 = rng.next_f32();
-    let u2 = rng.next_f32();
+fn sample_cone<R: Rng>(rng: &mut R, cos_theta_max: f32) -> Vector3<f32> {
+    let u1: f32 = rng.gen();
+    let u2: f32 = rng.gen();
 
     let cos_theta = (1.0 - u1) + u1*cos_theta_max;
     let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
@@ -52,7 +51,7 @@ impl SampleableEmitter for Sphere {
         }
     }
 
-    fn sample(&self, rng: &mut IsaacRng, initial: Point3<f32>) -> LightSample {
+    fn sample(&self, rng: &mut SampleRng, initial: Point3<f32>) -> LightSample {
         // See https://www.akalin.com/sampling-visible-sphere
         //  if a point on the sphere (rather than a direction) is needed
         let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);

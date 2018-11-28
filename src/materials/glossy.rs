@@ -1,4 +1,4 @@
-use rand::{Rng, IsaacRng};
+use rand::{Rng};
 
 use super::bsdf::*;
 use super::ggx::*;

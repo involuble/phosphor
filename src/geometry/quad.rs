@@ -1,8 +1,7 @@
-use rand::{Rng, IsaacRng};
-
 use math::*;
 use colour::*;
 use geometry::{SampleableEmitter, LightSample};
+use sampling::*;
 
 #[derive(Debug, Clone)]
 pub struct Quad {
@@ -55,9 +54,9 @@ impl SampleableEmitter for Quad {
         }
     }
 
-    fn sample(&self, rng: &mut IsaacRng, initial: Point3<f32>) -> LightSample {
-        let u1 = rng.next_f32();
-        let u2 = rng.next_f32();
+    fn sample(&self, rng: &mut SampleRng, initial: Point3<f32>) -> LightSample {
+        let u1 = rng.gen();
+        let u2 = rng.gen();
 
         let p = self.p0 + self.edge1 * u1 + self.edge2 * u2;
 

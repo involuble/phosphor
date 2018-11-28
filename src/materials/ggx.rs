@@ -1,4 +1,4 @@
-use rand::{Rng, IsaacRng};
+use rand::{Rng};
 
 use super::bsdf::*;
 use math::*;
@@ -58,7 +58,7 @@ impl GGX {
         alpha_sq / (PI * denom * denom)
     }
 
-    fn sample(&self, rng: &mut IsaacRng, basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample {
+    fn sample<R: Rng>(&self, rng: &mut R, basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample {
         let w_i = Vector3::new(w_i.x * self.alpha, w_i.y * self.alpha, w_i.z);
         unimplemented!()
     }

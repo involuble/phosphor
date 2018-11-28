@@ -1,25 +1,25 @@
 pub use colour::*;
-pub use tonemap::*;
+pub use image_buffer::*;
 
 #[derive(Debug, Clone)]
 pub struct RenderBuffer {
     pub data: Vec<PixelRecord>,
-    pub width: u32,
-    pub height: u32,
+    pub width: usize,
+    pub height: usize,
 }
 
 impl RenderBuffer {
-    pub fn new(w: u32, h: u32) -> Self {
+    pub fn new(w: usize, h: usize) -> Self {
         let len = w * h;
         RenderBuffer {
-            data: vec![PixelRecord::empty(); len as usize],
+            data: vec![PixelRecord::empty(); len],
             width: w,
             height: h,
         }
     }
 
     pub fn resolve(&self) -> Image {
-        let mut v = Vec::with_capacity((self.width * self.height) as usize);
+        let mut v = Vec::with_capacity(self.width * self.height);
         for pixel in &self.data {
             // debug_assert!(pixel.sample_count > 0.0);
             let mut colour = Colour::zero();

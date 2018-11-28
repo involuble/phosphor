@@ -1,11 +1,11 @@
 use embree;
-use rand::{IsaacRng};
 
 use math::*;
 use colour::*;
+use sampling::*;
 
 pub trait Bsdf {
-    fn sample(&self, rng: &mut IsaacRng, basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample;
+    fn sample(&self, rng: &mut SampleRng, basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample;
     fn eval(&self, basis: &TangentFrame, w_i: Vector3<f32>, w_o: Vector3<f32>) -> BsdfSample;
     
     fn albedo(&self) -> Colour;

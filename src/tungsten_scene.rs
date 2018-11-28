@@ -70,7 +70,7 @@ pub struct Transform {
 #[derive(Deserialize)]
 pub struct Camera {
     pub tonemap: String,
-    pub resolution: [u32; 2],
+    pub resolution: [usize; 2],
     pub reconstruction_filter: String,
     pub transform: CameraTransform,
     #[serde(rename = "fov")]
@@ -109,8 +109,8 @@ pub struct RendererSettings {
     pub enable_resume_render: bool,
     pub stratified_sampler: bool,
     pub scene_bvh: bool,
-    pub spp: u32,
-    pub spp_step: u32,
+    pub spp: usize,
+    pub spp_step: usize,
     pub checkpoint_interval: String,
     pub timeout: String,
     pub hdr_output_file: String,

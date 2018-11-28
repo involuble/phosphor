@@ -1,4 +1,4 @@
-use rand::{Rng, IsaacRng, SeedableRng};
+use rand::{Rng, SeedableRng};
 use embree::{Hit};
 use rayon::prelude::*;
 
@@ -9,10 +9,11 @@ use colour::*;
 use camera::*;
 use render_buffer::*;
 use render_settings::*;
+use sampling::*;
 
 pub struct PathIntegrator {
     scene: Scene,
-    spp: u32,
+    spp: usize,
     max_depth: u32,
 }
 
@@ -31,16 +32,16 @@ impl PathIntegrator {
         let inv_h = 1.0 / (render_buffer.height as f32);
 
         render_buffer.data.par_iter_mut().enumerate().for_each(|(index, pixel)| {
-            let x_i = (index as u32) % width;
-            let y_i = (index as u32) / width;
+            let x_i = index % width;
+            let y_i = index / width;
             // if !(x_i == 505 && y_i == 90) { return; }
             let x = (x_i as f32) * inv_w;
             let y = (y_i as f32) * inv_h;
 
             for sample_i in 0..self.spp {
-                let mut rng = IsaacRng::from_seed([31415, x_i, y_i, sample_i].as_ref());
-                let r1 = rng.next_f32();
-                let r2 = rng.next_f32();
+                let mut rng = SampleRng::seed_from_u64((x_i * width * self.spp + y_i * self.spp + sample_i) as u64);
+                let r1: f32 = rng.gen();
+                let r2: f32 = rng.gen();
                 let offset_x = r1 * inv_w;
                 let offset_y = r2 * inv_h;
 
@@ -55,7 +56,7 @@ impl PathIntegrator {
         })
     }
 
-    pub fn radiance(&self, camera_ray: &Ray, rng: &mut IsaacRng) -> Colour {
+    pub fn radiance(&self, camera_ray: &Ray, rng: &mut SampleRng) -> Colour {
         let mut ray = *camera_ray;
 
         let mut radiance = Colour::zero();
@@ -98,7 +99,7 @@ impl PathIntegrator {
         radiance
     }
 
-    fn direct_light_sample(&self, rng: &mut IsaacRng, ray: &Ray, hit: &Hit, shading: &ShadingParameters) -> Colour {
+    fn direct_light_sample(&self, rng: &mut SampleRng, ray: &Ray, hit: &Hit, shading: &ShadingParameters) -> Colour {
         if self.scene.lights.len() == 0 {
             return Colour::zero();
         }
@@ -109,7 +110,7 @@ impl PathIntegrator {
             &vec[i as usize]
         };
 
-        let (light_id, light) = rand_select(&self.scene.lights, rng.next_u32());
+        let (light_id, light) = rand_select(&self.scene.lights, rng.gen());
         let light_id = *light_id;
 
         if hit.geom_id == light_id {

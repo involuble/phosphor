@@ -7,6 +7,7 @@ extern crate cgmath;
 extern crate approx;
 extern crate num_traits;
 extern crate rand;
+extern crate rand_pcg;
 extern crate tobj;
 extern crate vec_map;
 extern crate rayon;
@@ -20,13 +21,14 @@ mod math;
 mod colour;
 mod geometry;
 mod materials;
+mod sampling;
 
 mod material_type;
 mod scene;
 mod path_integrator;
 mod camera;
 mod render_buffer;
-mod tonemap;
+mod image_buffer;
 mod render_settings;
 mod tungsten_scene;
 mod tungsten_scene_convert;
@@ -118,8 +120,8 @@ fn main() {
     let saved = image::save_buffer(
         path,
         image_ldr.as_ref(),
-        image.width,
-        image.height,
+        image.width as u32,
+        image.height as u32,
         image::RGB(8),
     );
     match saved {

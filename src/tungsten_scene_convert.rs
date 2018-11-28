@@ -92,7 +92,7 @@ impl tungsten_scene::SceneDescription {
             aspect)
     }
 
-    pub fn resolution(&self) -> (u32, u32) {
+    pub fn resolution(&self) -> (usize, usize) {
         (self.camera.resolution[0], self.camera.resolution[1])
     }
 
