@@ -1,5 +1,4 @@
-#![allow(non_camel_case_types)]
-#![allow(dead_code)]
+// #![allow(dead_code)]
 
 use colour::rgb::*;
 
@@ -7,15 +6,15 @@ use num_traits::*;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub struct sRGB {
+pub struct sRgb {
     pub r: f32,
     pub g: f32,
     pub b: f32,
 }
 
-impl sRGB {
+impl sRgb {
     pub fn new(r: f32, g: f32, b: f32) -> Self {
-        sRGB {
+        sRgb {
             r: r,
             g: g,
             b: b,
@@ -31,7 +30,7 @@ impl sRGB {
     }
 
     pub fn from_rgb8(rgb: [u8; 3]) -> Self {
-        sRGB {
+        sRgb {
             r: u8_to_float(rgb[0]),
             g: u8_to_float(rgb[1]),
             b: u8_to_float(rgb[2]),
@@ -84,18 +83,18 @@ fn float_to_u8(f: f32) -> u8 {
     Float::floor(f * 255.0 + 0.5) as u8
 }
 
-impl From<RGB<Rec709>> for sRGB {
-    fn from(rgb: RGB<Rec709>) -> Self {
-        sRGB::new(
+impl From<Rgb<Rec709>> for sRgb {
+    fn from(rgb: Rgb<Rec709>) -> Self {
+        sRgb::new(
             linear_to_srgb_approx(rgb.r),
             linear_to_srgb_approx(rgb.g),
             linear_to_srgb_approx(rgb.b))
     }
 }
 
-impl From<sRGB> for RGB<Rec709> {
-    fn from(rgb: sRGB) -> Self {
-        RGB::new(
+impl From<sRgb> for Rgb<Rec709> {
+    fn from(rgb: sRgb) -> Self {
+        Rgb::new(
             srgb_to_linear_approx(rgb.r),
             srgb_to_linear_approx(rgb.g),
             srgb_to_linear_approx(rgb.b))
@@ -104,9 +103,9 @@ impl From<sRGB> for RGB<Rec709> {
 
 #[cfg(test)]
 fn rgb_round_trip(rgb: [u8; 3], dist: i32) {
-    let srgb = sRGB::from_rgb8(rgb);
-    let linear = RGB::from(srgb);
-    let srgb_out = sRGB::from(linear);
+    let srgb = sRgb::from_rgb8(rgb);
+    let linear = Rgb::from(srgb);
+    let srgb_out = sRgb::from(linear);
     let rgb_out = srgb_out.to_rgb8();
     let diff = ((rgb[0] as i32) - (rgb_out[0] as i32)).abs();
     assert!(diff <= dist, "sRGB conversion too inaccurate: initial = {:?}, converted = {:?}", rgb, rgb_out);

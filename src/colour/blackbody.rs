@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use colour::rgb::*;
 use colour::srgb::*;
 
@@ -11,9 +9,9 @@ pub struct Blackbody {
 }
 
 impl Blackbody {
-    pub fn colour(&self) -> RGB<Rec709> {
+    pub fn colour(&self) -> Rgb<Rec709> {
         let (r, g, b) = blackbody_to_colour(self.temp);
-        sRGB::new(r, g, b).into()
+        sRgb::new(r, g, b).into()
     }
 }
 

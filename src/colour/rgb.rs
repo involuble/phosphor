@@ -1,5 +1,3 @@
-#![allow(non_camel_case_types)]
-
 use std::ops::*;
 use std::fmt;
 use std::marker::PhantomData;
@@ -27,18 +25,18 @@ impl ColourSpace for Rec709 {
 /// RGB colour vector in a particular colour space
 #[repr(C)]
 // #[derive(Add, Mul, AddAssign, Div)] // Can't derive these because of PhantomData
-pub struct RGB<S: ColourSpace> {
+pub struct Rgb<S: ColourSpace> {
     pub r: f32,
     pub g: f32,
     pub b: f32,
     phantom: PhantomData<S>,
 }
 
-pub type Colour = RGB<Rec709>;
+pub type Colour = Rgb<Rec709>;
 
-impl<S: ColourSpace> RGB<S> {
+impl<S: ColourSpace> Rgb<S> {
     pub fn new(r: f32, g: f32, b: f32) -> Self {
-        RGB {
+        Rgb {
             r: r,
             g: g,
             b: b,
@@ -55,28 +53,28 @@ impl<S: ColourSpace> RGB<S> {
     // }
 }
 
-impl<S: ColourSpace> Copy for RGB<S> {}
-impl<S: ColourSpace> Clone for RGB<S> {
+impl<S: ColourSpace> Copy for Rgb<S> {}
+impl<S: ColourSpace> Clone for Rgb<S> {
     fn clone(&self) -> Self {
-        RGB::new(self.r, self.g, self.b)
+        Rgb::new(self.r, self.g, self.b)
     }
 }
 
-impl<S: ColourSpace> fmt::Debug for RGB<S> {
+impl<S: ColourSpace> fmt::Debug for Rgb<S> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({:?},{:?},{:?})", self.r, self.g, self.b)
     }
 }
 
-impl<S: ColourSpace> fmt::Display for RGB<S> {
+impl<S: ColourSpace> fmt::Display for Rgb<S> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({},{},{})", self.r, self.g, self.b)
     }
 }
 
-impl<S: ColourSpace> Zero for RGB<S> {
+impl<S: ColourSpace> Zero for Rgb<S> {
     fn zero() -> Self {
-        RGB::new(0.0, 0.0, 0.0)
+        Rgb::new(0.0, 0.0, 0.0)
     }
 
     fn is_zero(&self) -> bool {
@@ -84,9 +82,9 @@ impl<S: ColourSpace> Zero for RGB<S> {
     }
 }
 
-impl<S: ColourSpace> One for RGB<S> {
+impl<S: ColourSpace> One for Rgb<S> {
     fn one() -> Self {
-        RGB::new(1.0, 1.0, 1.0)
+        Rgb::new(1.0, 1.0, 1.0)
     }
 
     fn is_one(&self) -> bool {
@@ -94,64 +92,64 @@ impl<S: ColourSpace> One for RGB<S> {
     }
 }
 
-impl<S: ColourSpace> Mul<RGB<S>> for RGB<S> {
-    type Output = RGB<S>;
+impl<S: ColourSpace> Mul<Rgb<S>> for Rgb<S> {
+    type Output = Rgb<S>;
 
-    fn mul(self, rhs: RGB<S>) -> Self::Output {
-        RGB::new(self.r * rhs.r, self.g * rhs.g, self.b * rhs.b)
+    fn mul(self, rhs: Rgb<S>) -> Self::Output {
+        Rgb::new(self.r * rhs.r, self.g * rhs.g, self.b * rhs.b)
     }
 }
 
-impl<S: ColourSpace> Mul<RGB<S>> for f32 {
-    type Output = RGB<S>;
+impl<S: ColourSpace> Mul<Rgb<S>> for f32 {
+    type Output = Rgb<S>;
 
-    fn mul(self, rhs: RGB<S>) -> Self::Output {
-        RGB::new(self * rhs.r, self * rhs.g, self * rhs.b)
+    fn mul(self, rhs: Rgb<S>) -> Self::Output {
+        Rgb::new(self * rhs.r, self * rhs.g, self * rhs.b)
     }
 }
 
-impl<S: ColourSpace> MulAssign<RGB<S>> for RGB<S> {
-    fn mul_assign(&mut self, rhs: RGB<S>) {
+impl<S: ColourSpace> MulAssign<Rgb<S>> for Rgb<S> {
+    fn mul_assign(&mut self, rhs: Rgb<S>) {
         *self = *self * rhs;
     }
 }
 
 // These should be derived
-impl<S: ColourSpace> Add<RGB<S>> for RGB<S> {
-    type Output = RGB<S>;
+impl<S: ColourSpace> Add<Rgb<S>> for Rgb<S> {
+    type Output = Rgb<S>;
 
-    fn add(self, rhs: RGB<S>) -> Self::Output {
-        RGB::new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
+    fn add(self, rhs: Rgb<S>) -> Self::Output {
+        Rgb::new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
     }
 }
 
-impl<S: ColourSpace> Sub<RGB<S>> for RGB<S> {
-    type Output = RGB<S>;
+impl<S: ColourSpace> Sub<Rgb<S>> for Rgb<S> {
+    type Output = Rgb<S>;
 
-    fn sub(self, rhs: RGB<S>) -> Self::Output {
-        RGB::new(self.r - rhs.r, self.g - rhs.g, self.b - rhs.b)
+    fn sub(self, rhs: Rgb<S>) -> Self::Output {
+        Rgb::new(self.r - rhs.r, self.g - rhs.g, self.b - rhs.b)
     }
 }
 
-impl<S: ColourSpace> AddAssign<RGB<S>> for RGB<S> {
-    fn add_assign(&mut self, rhs: RGB<S>) {
+impl<S: ColourSpace> AddAssign<Rgb<S>> for Rgb<S> {
+    fn add_assign(&mut self, rhs: Rgb<S>) {
         *self = *self + rhs;
     }
 }
 
-impl<S: ColourSpace> Mul<f32> for RGB<S> {
-    type Output = RGB<S>;
+impl<S: ColourSpace> Mul<f32> for Rgb<S> {
+    type Output = Rgb<S>;
 
     fn mul(self, rhs: f32) -> Self::Output {
-        RGB::new(self.r * rhs, self.g * rhs, self.b * rhs)
+        Rgb::new(self.r * rhs, self.g * rhs, self.b * rhs)
     }
 }
 
-impl<S: ColourSpace> Div<f32> for RGB<S> {
-    type Output = RGB<S>;
+impl<S: ColourSpace> Div<f32> for Rgb<S> {
+    type Output = Rgb<S>;
 
     fn div(self, rhs: f32) -> Self::Output {
         let inv = 1.0 / rhs;
-        RGB::new(self.r * inv, self.g * inv, self.b * inv)
+        Rgb::new(self.r * inv, self.g * inv, self.b * inv)
     }
 }
