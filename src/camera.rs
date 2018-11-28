@@ -1,5 +1,5 @@
 use std::f32;
-use cgmath::*;
+use math::prelude::*;
 
 use geometry::*;
 

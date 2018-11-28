@@ -23,12 +23,13 @@ impl TangentFrame {
     }
 }
 
-// Creates an orthonormal basis given a normal vector.
-//   The vectors are returned in a tuple as tangent and bitangent
-// Reference: [Duff2017Basis]
-//  http://jcgt.org/published/0006/01/01/paper.pdf or
-//  http://graphics.pixar.com/library/OrthonormalB/paper.pdf
+/// Creates an orthonormal basis given a vector.
+/// The vectors are returned in a tuple as (x, y) and form a right hand
+///  coordinate system of (x,y,z)
 pub fn make_orthonormal_basis(n: Vector3<f32>) -> (Vector3<f32>, Vector3<f32>) {
+    // Reference: [Duff2017Basis]
+    //  http://jcgt.org/published/0006/01/01/paper.pdf or
+    //  http://graphics.pixar.com/library/OrthonormalB/paper.pdf
     let sign = n.z.signum();
     let a = -1.0 / (sign + n.z);
     let b = n.x * n.y * a;

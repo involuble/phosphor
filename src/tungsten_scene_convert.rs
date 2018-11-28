@@ -14,17 +14,17 @@ use render_settings::{RenderSettings};
 
 use tungsten_scene;
 
-fn val_to_colour(v: tungsten_scene::VectorValue) -> Colour {
+fn val_to_colour(v: tungsten_scene::VectorOrScalar) -> Colour {
     match v {
-        tungsten_scene::VectorValue::Scalar(s) => Colour::new(s, s, s),
-        tungsten_scene::VectorValue::Vector(v) => Colour::new(v[0], v[1], v[2]),
+        tungsten_scene::VectorOrScalar::Scalar(s) => Colour::new(s, s, s),
+        tungsten_scene::VectorOrScalar::Vector(v) => Colour::new(v[0], v[1], v[2]),
     }
 }
 
-fn val_to_vec3(v: tungsten_scene::VectorValue) -> Vector3<f32> {
+fn val_to_vec3(v: tungsten_scene::VectorOrScalar) -> Vector3<f32> {
     match v {
-        tungsten_scene::VectorValue::Scalar(s) => Vector3::new(s, s, s),
-        tungsten_scene::VectorValue::Vector(v) => Vector3::new(v[0], v[1], v[2]),
+        tungsten_scene::VectorOrScalar::Scalar(s) => Vector3::new(s, s, s),
+        tungsten_scene::VectorOrScalar::Vector(v) => Vector3::new(v[0], v[1], v[2]),
     }
 }
 
@@ -73,6 +73,13 @@ const CUBE_INDICES: [embree::Triangle; 12] = [
     embree::Triangle { v0: 3, v1: 5, v2: 7 },
 ];
 
+// Source: https://refractiveindex.info/
+const METAL_IOR: [(&str, &str, Ior); 3] = [
+    ("Au", "Gold", Ior { n: [0.15557, 0.42415, 1.3831], k: [3.6024, 2.4721, 1.9155]}),
+    ("Ag", "Silver", Ior { n: [0.052225, 0.059582, 0.040000], k: [4.4094, 3.5974, 2.6484]}),
+    ("Cu", "Copper", Ior { n: [0.23780, 1.0066, 1.2404], k: [3.6264, 2.5823, 2.3929]}),
+];
+
 impl tungsten_scene::SceneDescription {
     pub fn build_camera(&self) -> Camera {
         let res = self.camera.resolution;
@@ -100,13 +107,15 @@ impl tungsten_scene::SceneDescription {
         let mut materials = HashMap::new();
 
         for bsdf in &self.bsdfs {
-            let m = match bsdf.bsdf_type.as_ref() {
-                "lambert" => {
-                    MaterialType::Diffuse(Lambert::new(val_to_colour(bsdf.albedo)))
+            let albedo = val_to_colour(bsdf.albedo);
+            #[allow(unreachable_patterns)]
+            let m = match &bsdf.bsdf {
+                tungsten_scene::BSDF::Lambert {} => {
+                    MaterialType::Diffuse(Lambert::new(albedo))
                 },
-                "null" => MaterialType::Diffuse(Lambert::new(Colour::zero())),
+                tungsten_scene::BSDF::Null => MaterialType::Diffuse(Lambert::new(Colour::zero())),
                 b => {
-                    warn!("Unknown BSDF type: {}", b);
+                    warn!("Unsupported BSDF type: {:?}", b);
                     MaterialType::Diffuse(Lambert::new(Colour::zero()))
                 },
             };
@@ -118,14 +127,15 @@ impl tungsten_scene::SceneDescription {
             let transform = prim.transform.to_affine_transform();
             let emission = if let Some(e) = prim.emission { val_to_colour(e) } else { Colour::zero() };
 
-            match prim.primitive_type.as_ref() {
-                "sphere" => {
+            #[allow(unreachable_patterns)]
+            match &prim.primitive {
+                tungsten_scene::PrimitiveType::Sphere => {
                     let mut sphere = Sphere::unit();
                     sphere.transform_by(&transform);
                     sphere.emission = emission;
                     scene.add_sphere(sphere, mat.clone());
                 },
-                "quad" => {
+                tungsten_scene::PrimitiveType::Quad => {
                     let mut quad = Quad::new(
                         Point3::new(-0.5, 0.0, -0.5),
                         Point3::new( 0.5, 0.0, -0.5),
@@ -135,7 +145,7 @@ impl tungsten_scene::SceneDescription {
                     quad.emission = emission;
                     scene.add_quad(quad, mat.clone());
                 }
-                "cube" => {
+                tungsten_scene::PrimitiveType::Cube => {
                     let mut cube = embree::TriangleMesh::new(&scene.device,
                         Vec::from(CUBE_INDICES.as_ref()),
                         Vec::from(CUBE_VERTICES.as_ref()));
@@ -143,7 +153,7 @@ impl tungsten_scene::SceneDescription {
                     cube.transform_mesh(matrix);
                     scene.add_mesh(cube, mat.clone());
                 }
-                t => warn!("Unknown primitive type: {}", t),
+                t => warn!("Unknown primitive type: {:?}", t),
             }
         }
     }

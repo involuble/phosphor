@@ -3,7 +3,6 @@ pub mod blackbody;
 pub mod srgb;
 
 pub use self::rgb::*;
-pub use self::blackbody::*;
 pub use self::srgb::*;
 
-pub use num_traits::Zero;
+pub use num_traits::{One, Zero};

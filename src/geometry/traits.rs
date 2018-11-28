@@ -12,7 +12,9 @@ pub trait SampleableEmitter: Send + Sync {
 
 #[derive(Debug, Clone, Copy)]
 pub struct LightSample {
+    /// Direction to the sampled point on the object
     pub dir: Vector3<f32>,
+    /// A conservative estimate of the distance to the sampled object
     pub distance: f32,
     pub radiance: Colour,
     pub pdf: PdfW,

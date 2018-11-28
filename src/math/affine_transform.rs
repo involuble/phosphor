@@ -23,9 +23,9 @@ impl AffineTransform {
         self.rotation * v
     }
 
-    // pub fn transform_vector(&self, v: Vector3<f32>) -> Vector3<f32> {
-    //     self.rotation.rotate_vector(v).mul_element_wise(self.scale)
-    // }
+    pub fn transform_vector(&self, v: Vector3<f32>) -> Vector3<f32> {
+        (self.rotation * v).mul_element_wise(self.scale)
+    }
 
     pub fn to_matrix(&self) -> Matrix4<f32> {
         let mut m = Matrix4::from(self.rotation);

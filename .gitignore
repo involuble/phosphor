@@ -5,4 +5,5 @@ render.png
 *.log
 *.cxl
 scenes/tungsten
+scenes/obj
 src-old

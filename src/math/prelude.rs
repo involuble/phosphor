@@ -6,7 +6,7 @@ pub use super::tangent::*;
 // Re-exports
 
 pub use cgmath::*;
-pub use num_traits::{clamp, Zero};
+pub use num_traits::{clamp, Zero, One};
 
 pub use std::cmp::{min, max};
 

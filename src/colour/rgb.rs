@@ -4,7 +4,7 @@ use std::ops::*;
 use std::fmt;
 use std::marker::PhantomData;
 
-use num_traits::{Zero};
+use num_traits::{Zero, One};
 
 pub trait ColourSpace {
     const NAME: &'static str;
@@ -84,6 +84,16 @@ impl<S: ColourSpace> Zero for RGB<S> {
     }
 }
 
+impl<S: ColourSpace> One for RGB<S> {
+    fn one() -> Self {
+        RGB::new(1.0, 1.0, 1.0)
+    }
+
+    fn is_one(&self) -> bool {
+        self.r == 1.0 && self.g == 1.0 && self.b == 1.0
+    }
+}
+
 impl<S: ColourSpace> Mul<RGB<S>> for RGB<S> {
     type Output = RGB<S>;
 
@@ -112,6 +122,14 @@ impl<S: ColourSpace> Add<RGB<S>> for RGB<S> {
 
     fn add(self, rhs: RGB<S>) -> Self::Output {
         RGB::new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
+    }
+}
+
+impl<S: ColourSpace> Sub<RGB<S>> for RGB<S> {
+    type Output = RGB<S>;
+
+    fn sub(self, rhs: RGB<S>) -> Self::Output {
+        RGB::new(self.r - rhs.r, self.g - rhs.g, self.b - rhs.b)
     }
 }
 

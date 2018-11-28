@@ -63,7 +63,7 @@ fn display_error(err: Box<Error>) -> String {
 fn pretty_duration(d: ::std::time::Duration) -> String {
     let minutes = d.as_secs() / 60;
     let sec = d.as_secs() % 60;
-    let millis = d.subsec_nanos() / 1_000_000;
+    let millis = d.subsec_millis();
     let pretty;
     if minutes > 30 {
         let hours = minutes / 60;

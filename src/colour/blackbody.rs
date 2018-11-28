@@ -17,7 +17,8 @@ impl Blackbody {
     }
 }
 
-// Temp should be roughly in range 1000K..40,000K
+/// Convert a blackbody temperature to an RGB triple
+/// Temp should be roughly in range 1000K..40,000K
 fn blackbody_to_colour(temp: f32) -> (f32, f32, f32) {
     // See http://www.zombieprototypes.com/?p=210
     let temp = clamp(temp, 1000.0, 40000.0);

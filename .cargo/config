@@ -1,5 +1,2 @@
 [build]
 rustflags = ["-C", "target-cpu=native"]
-
-#[alias]
-#gen  = "run --package tools --bin gen"

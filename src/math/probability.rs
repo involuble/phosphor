@@ -1,9 +1,20 @@
 use super::prelude::{EPSILON};
 
+/// Probability distribution function w.r.t solid angle
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PdfW(pub f32);
 
+impl PdfW {
+    // pub fn to_pdf_area(&self, dist_sq: f32, cos_theta: f32) -> PdfA {
+    //     if dist_sq < EPSILON {
+    //         return PdfA(0.0);
+    //     }
+    //     PdfA(self.0 * cos_theta / dist_sq)
+    // }
+}
+
+/// Probability distribution function w.r.t area
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PdfA(pub f32);
@@ -11,7 +22,7 @@ pub struct PdfA(pub f32);
 impl PdfA {
     pub fn to_pdfw(&self, dist_sq: f32, cos_theta: f32) -> PdfW {
         let abs_cos = cos_theta.abs();
-        if abs_cos <= EPSILON {
+        if abs_cos < EPSILON {
             return PdfW(0.0)
         }
         PdfW(self.0 * dist_sq / abs_cos)

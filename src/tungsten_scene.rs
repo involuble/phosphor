@@ -12,22 +12,18 @@ pub struct SceneDescription {
 pub struct BSDFEntry {
     pub name: String,
 
-    // Unfortunately only structs can be flattened so this won't work (yet)
-    // #[serde(flatten)]
-    // pub bsdf: BSDF,
-    #[serde(rename = "type")]
-    pub bsdf_type: String,
+    #[serde(flatten)]
+    pub bsdf: BSDF,
 
-    pub albedo: VectorValue,
+    pub albedo: VectorOrScalar,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type")]
 pub enum BSDF {
-    Lambert {
-        albedo: VectorValue,
-    }
+    Null,
+    Lambert {},
 }
 
 fn default_vec3() -> [f32; 3] {
@@ -37,25 +33,23 @@ fn default_vec3() -> [f32; 3] {
 #[derive(Debug, Copy, Clone)]
 #[derive(Deserialize)]
 #[serde(untagged)]
-pub enum VectorValue {
+pub enum VectorOrScalar {
     Scalar(f32),
     Vector([f32; 3]),
 }
 
 #[derive(Deserialize)]
 pub struct Primitive {
-    // #[serde(flatten)]
-    // pub primitive: PrimitiveType,
-    #[serde(rename = "type")]
-    pub primitive_type: String,
+    #[serde(flatten)]
+    pub primitive: PrimitiveType,
 
     pub transform: Transform,
     pub bsdf: String,
     #[serde(default)]
-    pub emission: Option<VectorValue>,
+    pub emission: Option<VectorOrScalar>,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type")]
 pub enum PrimitiveType {
@@ -68,7 +62,7 @@ pub enum PrimitiveType {
 pub struct Transform {
     #[serde(default = "default_vec3")]
     pub position: [f32; 3],
-    pub scale: VectorValue,
+    pub scale: VectorOrScalar,
     /// Euler angles specified in degrees
     pub rotation: [f32; 3],
 }

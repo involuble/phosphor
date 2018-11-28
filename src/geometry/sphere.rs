@@ -39,28 +39,33 @@ fn sample_cone(rng: &mut IsaacRng, cos_theta_max: f32) -> Vector3<f32> {
 }
 
 impl SampleableEmitter for Sphere {
-    fn eval_emission_at(&self, initial: Point3<f32>, _p: Point3<f32>) -> LightSample {
-        let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
+    fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample {
+        let distance = self.center.distance2(initial);
+        let sin_theta_max2 = self.radius * self.radius / (distance * distance);
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
         let pdf = 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
         LightSample {
-            // dir: (p - initial).normalize(),
-            // distance: (p - initial).magnitude(),
-            dir: Vector3::zero(), // Questionable but nothing uses them so far
-            distance: ::std::f32::MAX,
+            dir: (p - initial).normalize(),
+            distance: distance,
             radiance: self.emission,
             pdf: PdfW(pdf),
         }
     }
 
     fn sample(&self, rng: &mut IsaacRng, initial: Point3<f32>) -> LightSample {
+        // See https://www.akalin.com/sampling-visible-sphere
+        //  if a point on the sphere (rather than a direction) is needed
         let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
-        debug_assert!(sin_theta_max2 <= 1.0 && sin_theta_max2 >= 0.0);
+        if sin_theta_max2 >= 1.0 {
+            // Sample by uniform area
+            unimplemented!();
+        }
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
 
         let v = sample_cone(rng, cos_theta_max);
 
-        let to = (self.center - initial).normalize();
+        let dist = self.center.distance(initial);
+        let to = (self.center - initial) / dist;
         let (cone_x, cone_y) = make_orthonormal_basis(to);
 
         let d = v.x * cone_x + v.y * cone_y + v.z * to;
@@ -68,7 +73,7 @@ impl SampleableEmitter for Sphere {
 
         LightSample {
             dir: d,
-            distance: ::std::f32::MAX, // TODO
+            distance: dist,
             radiance: self.emission,
             pdf: PdfW(1.0 / (2.0 * PI * (1.0 - cos_theta_max))),
         }

@@ -103,8 +103,8 @@ impl PathIntegrator {
             return Colour::zero();
         }
 
-        // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
         fn rand_select<'a, T>(vec: &'a Vec<T>, rand: u32) -> &'a T {
+            // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
             let i = ((vec.len() as u64) * (rand as u64)) >> 32;
             &vec[i as usize]
         };
