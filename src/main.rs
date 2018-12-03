@@ -3,7 +3,6 @@ extern crate log;
 extern crate fern;
 extern crate image;
 extern crate cgmath;
-#[macro_use]
 extern crate approx;
 extern crate num_traits;
 extern crate rand;
@@ -48,18 +47,6 @@ fn load_scene<P: AsRef<Path>>(path: P) -> Result<tungsten_scene::SceneDescriptio
 
     let s = serde_json::from_reader(file)?;
     Ok(s)
-}
-
-#[allow(dead_code)]
-fn display_error(err: Box<Error>) -> String {
-    let mut acc_str = err.to_string();
-    let mut prev = err.as_ref();
-    while let Some(next) = prev.cause() {
-        acc_str.push_str(": ");
-        acc_str.push_str(&next.to_string());
-        prev = next;
-    }
-    acc_str
 }
 
 fn pretty_duration(d: ::std::time::Duration) -> String {

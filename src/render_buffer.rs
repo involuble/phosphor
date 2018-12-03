@@ -4,22 +4,22 @@ pub use image_buffer::*;
 #[derive(Debug, Clone)]
 pub struct RenderBuffer {
     pub data: Vec<PixelRecord>,
-    pub width: usize,
-    pub height: usize,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl RenderBuffer {
-    pub fn new(w: usize, h: usize) -> Self {
+    pub fn new(w: u32, h: u32) -> Self {
         let len = w * h;
         RenderBuffer {
-            data: vec![PixelRecord::empty(); len],
+            data: vec![PixelRecord::empty(); len as usize],
             width: w,
             height: h,
         }
     }
 
     pub fn resolve(&self) -> Image {
-        let mut v = Vec::with_capacity(self.width * self.height);
+        let mut v = Vec::with_capacity((self.width * self.height) as usize);
         for pixel in &self.data {
             // debug_assert!(pixel.sample_count > 0.0);
             let mut colour = Colour::zero();

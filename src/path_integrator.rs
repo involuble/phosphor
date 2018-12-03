@@ -13,7 +13,7 @@ use sampling::*;
 
 pub struct PathIntegrator {
     scene: Scene,
-    spp: usize,
+    spp: u32,
     max_depth: u32,
 }
 
@@ -32,8 +32,8 @@ impl PathIntegrator {
         let inv_h = 1.0 / (render_buffer.height as f32);
 
         render_buffer.data.par_iter_mut().enumerate().for_each(|(index, pixel)| {
-            let x_i = index % width;
-            let y_i = index / width;
+            let x_i = (index as u32) % width;
+            let y_i = (index as u32) / width;
             // if !(x_i == 505 && y_i == 90) { return; }
             let x = (x_i as f32) * inv_w;
             let y = (y_i as f32) * inv_h;

@@ -2,8 +2,8 @@ use colour::*;
 
 pub struct Image {
     pub image: Vec<Colour>,
-    pub width: usize,
-    pub height: usize,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl Image {

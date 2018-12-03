@@ -14,20 +14,6 @@ use render_settings::{RenderSettings};
 
 use tungsten_scene;
 
-fn val_to_colour(v: tungsten_scene::VectorOrScalar) -> Colour {
-    match v {
-        tungsten_scene::VectorOrScalar::Scalar(s) => Colour::new(s, s, s),
-        tungsten_scene::VectorOrScalar::Vector(v) => Colour::new(v[0], v[1], v[2]),
-    }
-}
-
-fn val_to_vec3(v: tungsten_scene::VectorOrScalar) -> Vector3<f32> {
-    match v {
-        tungsten_scene::VectorOrScalar::Scalar(s) => Vector3::new(s, s, s),
-        tungsten_scene::VectorOrScalar::Vector(v) => Vector3::new(v[0], v[1], v[2]),
-    }
-}
-
 impl tungsten_scene::Transform {
     pub fn to_affine_transform(&self) -> AffineTransform {
         let x = Matrix3::from_axis_angle(Vector3::unit_x(), Deg(self.rotation[0]));
@@ -35,7 +21,7 @@ impl tungsten_scene::Transform {
         let z = Matrix3::from_axis_angle(Vector3::unit_z(), Deg(self.rotation[2]));
         AffineTransform {
             rotation: y * x * z,
-            scale: val_to_vec3(self.scale),
+            scale: self.scale.into(),
             translation: Vector3::from(self.position),
         }
     }
@@ -92,7 +78,7 @@ impl tungsten_scene::SceneDescription {
             aspect)
     }
 
-    pub fn resolution(&self) -> (usize, usize) {
+    pub fn resolution(&self) -> (u32, u32) {
         (self.camera.resolution[0], self.camera.resolution[1])
     }
 
@@ -107,7 +93,7 @@ impl tungsten_scene::SceneDescription {
         let mut materials = HashMap::new();
 
         for bsdf in &self.bsdfs {
-            let albedo = val_to_colour(bsdf.albedo);
+            let albedo = bsdf.albedo.into();
             #[allow(unreachable_patterns)]
             let m = match &bsdf.bsdf {
                 tungsten_scene::BSDF::Lambert {} => {
@@ -125,7 +111,7 @@ impl tungsten_scene::SceneDescription {
             let mat = materials.get(&prim.bsdf).expect("Undeclared material");
 
             let transform = prim.transform.to_affine_transform();
-            let emission = if let Some(e) = prim.emission { val_to_colour(e) } else { Colour::zero() };
+            let emission = prim.emission.map_or_else(Colour::zero, Into::into);
 
             #[allow(unreachable_patterns)]
             match &prim.primitive {

@@ -1,3 +1,5 @@
+use serde::{Deserialize, Deserializer};
+
 #[derive(Deserialize)]
 pub struct SceneDescription {
     pub media: Vec<Medium>,
@@ -15,7 +17,8 @@ pub struct BSDFEntry {
     #[serde(flatten)]
     pub bsdf: BSDF,
 
-    pub albedo: VectorOrScalar,
+    #[serde(deserialize_with = "vector_or_scalar")]
+    pub albedo: [f32; 3],
 }
 
 #[derive(Debug, Deserialize)]
@@ -26,16 +29,28 @@ pub enum BSDF {
     Lambert {},
 }
 
-fn default_vec3() -> [f32; 3] {
+fn float3_zero() -> [f32; 3] {
     [0.0, 0.0, 0.0]
 }
 
-#[derive(Debug, Copy, Clone)]
 #[derive(Deserialize)]
 #[serde(untagged)]
-pub enum VectorOrScalar {
+enum VectorOrScalar {
     Scalar(f32),
     Vector([f32; 3]),
+}
+
+pub fn vector_or_scalar<'de, D>(deserializer: D) -> Result<[f32; 3], D::Error>
+    where D: Deserializer<'de> {
+    match VectorOrScalar::deserialize(deserializer)? {
+        VectorOrScalar::Vector(v) => Ok(v),
+        VectorOrScalar::Scalar(s) => Ok([s, s, s]),
+    }
+}
+
+pub fn option_vector_or_scalar<'de, D>(deserializer: D) -> Result<Option<[f32; 3]>, D::Error>
+    where D: Deserializer<'de> {
+    vector_or_scalar(deserializer).map(|v| Some(v))
 }
 
 #[derive(Deserialize)]
@@ -46,7 +61,8 @@ pub struct Primitive {
     pub transform: Transform,
     pub bsdf: String,
     #[serde(default)]
-    pub emission: Option<VectorOrScalar>,
+    #[serde(deserialize_with = "option_vector_or_scalar")]
+    pub emission: Option<[f32; 3]>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -60,9 +76,10 @@ pub enum PrimitiveType {
 
 #[derive(Deserialize)]
 pub struct Transform {
-    #[serde(default = "default_vec3")]
+    #[serde(default = "float3_zero")]
     pub position: [f32; 3],
-    pub scale: VectorOrScalar,
+    #[serde(deserialize_with = "vector_or_scalar")]
+    pub scale: [f32; 3],
     /// Euler angles specified in degrees
     pub rotation: [f32; 3],
 }
@@ -70,7 +87,7 @@ pub struct Transform {
 #[derive(Deserialize)]
 pub struct Camera {
     pub tonemap: String,
-    pub resolution: [usize; 2],
+    pub resolution: [u32; 2],
     pub reconstruction_filter: String,
     pub transform: CameraTransform,
     #[serde(rename = "fov")]
@@ -109,8 +126,8 @@ pub struct RendererSettings {
     pub enable_resume_render: bool,
     pub stratified_sampler: bool,
     pub scene_bvh: bool,
-    pub spp: usize,
-    pub spp_step: usize,
+    pub spp: u32,
+    pub spp_step: u32,
     pub checkpoint_interval: String,
     pub timeout: String,
     pub hdr_output_file: String,

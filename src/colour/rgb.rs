@@ -24,6 +24,7 @@ impl ColourSpace for Rec709 {
 
 /// RGB colour vector in a particular colour space
 #[repr(C)]
+#[derive(PartialEq)]
 // #[derive(Add, Mul, AddAssign, Div)] // Can't derive these because of PhantomData
 pub struct Rgb<S: ColourSpace> {
     pub r: f32,
@@ -53,6 +54,7 @@ impl<S: ColourSpace> Rgb<S> {
     // }
 }
 
+// FIXME: These should be deriveable but isn't yet because of PhantomData
 impl<S: ColourSpace> Copy for Rgb<S> {}
 impl<S: ColourSpace> Clone for Rgb<S> {
     fn clone(&self) -> Self {
@@ -69,6 +71,12 @@ impl<S: ColourSpace> fmt::Debug for Rgb<S> {
 impl<S: ColourSpace> fmt::Display for Rgb<S> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({},{},{})", self.r, self.g, self.b)
+    }
+}
+
+impl<S: ColourSpace> From<[f32; 3]> for Rgb<S> {
+    fn from(a: [f32; 3]) -> Self {
+        Rgb::new(a[0], a[1], a[2])
     }
 }
 
