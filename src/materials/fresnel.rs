@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use colour::*;
+use crate::colour::*;
 
 // See https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/
 //  for a reference on the Fresnel equations

@@ -1,6 +1,6 @@
 // #![allow(dead_code)]
 
-use colour::rgb::*;
+use crate::colour::rgb::*;
 
 use num_traits::*;
 

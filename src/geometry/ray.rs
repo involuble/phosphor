@@ -1,4 +1,4 @@
-use math::*;
+use crate::math::*;
 use embree;
 
 #[repr(C)]

@@ -1,8 +1,8 @@
-use math::*;
+use crate::math::*;
 use embree::*;
-use colour::*;
-use geometry::{SampleableEmitter, LightSample};
-use sampling::*;
+use crate::colour::*;
+use crate::geometry::{SampleableEmitter, LightSample};
+use crate::sampling::*;
 
 #[derive(Debug, Clone)]
 pub struct Sphere {

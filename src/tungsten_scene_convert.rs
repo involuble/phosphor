@@ -2,17 +2,17 @@ use std::collections::HashMap;
 
 use embree;
 
-use math::*;
-use colour::*;
-use geometry::*;
-use materials::*;
-use material_type::*;
+use crate::math::*;
+use crate::colour::*;
+use crate::geometry::*;
+use crate::materials::*;
+use crate::material_type::*;
 
-use scene::SceneBuilder;
-use camera::Camera;
-use render_settings::{RenderSettings};
+use crate::scene::SceneBuilder;
+use crate::camera::Camera;
+use crate::render_settings::{RenderSettings};
 
-use tungsten_scene;
+use crate::tungsten_scene;
 
 impl tungsten_scene::Transform {
     pub fn to_affine_transform(&self) -> AffineTransform {

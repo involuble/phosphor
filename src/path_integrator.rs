@@ -2,14 +2,14 @@ use rand::{Rng, SeedableRng};
 use embree::{Hit};
 use rayon::prelude::*;
 
-use math::*;
-use geometry::*;
-use scene::*;
-use colour::*;
-use camera::*;
-use render_buffer::*;
-use render_settings::*;
-use sampling::*;
+use crate::math::*;
+use crate::geometry::*;
+use crate::scene::*;
+use crate::colour::*;
+use crate::camera::*;
+use crate::render_buffer::*;
+use crate::render_settings::*;
+use crate::sampling::*;
 
 pub struct PathIntegrator {
     scene: Scene,

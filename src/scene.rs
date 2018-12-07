@@ -3,11 +3,11 @@ use embree;
 use embree::{BuildQuality, SceneFlags, Hit, GeomID};
 use vec_map::VecMap;
 
-use math::*;
-use colour::*;
-use material_type::*;
-use materials::*;
-use geometry::*;
+use crate::math::*;
+use crate::colour::*;
+use crate::material_type::*;
+use crate::materials::*;
+use crate::geometry::*;
 
 pub struct Scene {
     scene: embree::Scene,

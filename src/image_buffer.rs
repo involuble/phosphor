@@ -1,4 +1,4 @@
-use colour::*;
+use crate::colour::*;
 
 pub struct Image {
     pub image: Vec<Colour>,

@@ -1,5 +1,5 @@
-use colour::rgb::*;
-use colour::srgb::*;
+use crate::colour::rgb::*;
+use crate::colour::srgb::*;
 
 use num_traits::*;
 

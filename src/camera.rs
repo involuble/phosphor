@@ -1,7 +1,7 @@
 use std::f32;
-use math::prelude::*;
+use crate::math::prelude::*;
 
-use geometry::*;
+use crate::geometry::*;
 
 pub struct Camera {
     pub origin: Point3<f32>,

@@ -1,7 +1,7 @@
 use super::bsdf::*;
-use colour::*;
-use math::*;
-use sampling::*;
+use crate::colour::*;
+use crate::math::*;
+use crate::sampling::*;
 
 #[derive(Debug, Clone)]
 pub struct Lambert {

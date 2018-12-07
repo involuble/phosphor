@@ -1,8 +1,8 @@
 use rand::{Rng};
 
 use super::bsdf::*;
-use math::*;
-use colour::*;
+use crate::math::*;
+use crate::colour::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct GGX {
@@ -58,8 +58,8 @@ impl GGX {
         alpha_sq / (PI * denom * denom)
     }
 
-    fn sample<R: Rng>(&self, rng: &mut R, basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample {
-        let w_i = Vector3::new(w_i.x * self.alpha, w_i.y * self.alpha, w_i.z);
+    fn sample<R: Rng>(&self, _rng: &mut R, _basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample {
+        let _w_i = Vector3::new(w_i.x * self.alpha, w_i.y * self.alpha, w_i.z);
         unimplemented!()
     }
 

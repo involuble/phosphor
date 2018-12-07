@@ -1,5 +1,5 @@
-pub use colour::*;
-pub use image_buffer::*;
+pub use crate::colour::*;
+pub use crate::image_buffer::*;
 
 #[derive(Debug, Clone)]
 pub struct RenderBuffer {

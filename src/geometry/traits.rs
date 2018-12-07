@@ -1,6 +1,6 @@
-use math::*;
-use colour::*;
-use sampling::*;
+use crate::math::*;
+use crate::colour::*;
+use crate::sampling::*;
 
 pub trait SampleableEmitter: Send + Sync {
     fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample;

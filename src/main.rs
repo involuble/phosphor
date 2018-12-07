@@ -37,10 +37,10 @@ use std::fs::File;
 use std::path::Path;
 use std::time::Instant;
 
-use scene::*;
-use path_integrator::*;
-use render_buffer::*;
-use render_settings::*;
+use crate::scene::*;
+use crate::path_integrator::*;
+use crate::render_buffer::*;
+use crate::render_settings::*;
 
 fn load_scene<P: AsRef<Path>>(path: P) -> Result<tungsten_scene::SceneDescription, Box<Error>> {
     let file = File::open(path)?;

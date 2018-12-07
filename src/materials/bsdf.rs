@@ -1,8 +1,8 @@
 use embree;
 
-use math::*;
-use colour::*;
-use sampling::*;
+use crate::math::*;
+use crate::colour::*;
+use crate::sampling::*;
 
 pub trait Bsdf {
     fn sample(&self, rng: &mut SampleRng, basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample;
