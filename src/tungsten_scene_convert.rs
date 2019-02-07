@@ -60,7 +60,7 @@ const CUBE_INDICES: [embree::Triangle; 12] = [
 ];
 
 // Source: https://refractiveindex.info/
-const METAL_IOR: [(&str, &str, Ior); 3] = [
+const _METAL_IOR: [(&str, &str, Ior); 3] = [
     ("Au", "Gold", Ior { n: [0.15557, 0.42415, 1.3831], k: [3.6024, 2.4721, 1.9155]}),
     ("Ag", "Silver", Ior { n: [0.052225, 0.059582, 0.040000], k: [4.4094, 3.5974, 2.6484]}),
     ("Cu", "Copper", Ior { n: [0.23780, 1.0066, 1.2404], k: [3.6264, 2.5823, 2.3929]}),

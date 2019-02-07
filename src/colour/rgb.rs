@@ -9,6 +9,8 @@ pub trait ColourSpace {
     const XYZ_TO_RGB: [f32; 9];
 }
 
+// Colour space reference: http://www.brucelindbloom.com/index.html?Math.html
+
 /// The Rec. 709 or linear sRGB colour space
 pub struct Rec709 {}
 
@@ -20,9 +22,10 @@ impl ColourSpace for Rec709 {
         -0.9, 1.8, 0.04,
         0.05, -0.2, 1.05
     ];
+    // TODO: Add per-channel weights to calculate luminance?
 }
 
-/// RGB colour vector in a particular colour space
+/// RGB colour vector in a linear colour space
 #[repr(C)]
 #[derive(PartialEq)]
 // #[derive(Add, Mul, AddAssign, Div)] // Can't derive these because of PhantomData
@@ -43,6 +46,10 @@ impl<S: ColourSpace> Rgb<S> {
             b: b,
             phantom: PhantomData,
         }
+    }
+    
+    pub fn grey(value: f32) -> Self {
+        Self::new(value, value, value)
     }
 
     pub fn is_nan(&self) -> bool {

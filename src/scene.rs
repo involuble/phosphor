@@ -8,6 +8,7 @@ use crate::colour::*;
 use crate::material_type::*;
 use crate::materials::*;
 use crate::geometry::*;
+use crate::geometry::{Sphere};
 
 pub struct Scene {
     scene: embree::Scene,
@@ -32,8 +33,8 @@ impl Primitive {
     }
 }
 
-// TODO: private
 #[derive(Clone)]
+// TODO: private
 pub enum EmissiveGeometry {
     NotEmissive,
     Sphere(Sphere),
@@ -112,8 +113,17 @@ impl SceneBuilder {
             material: material,
         };
 
-        let user = embree::UserGeometry::new(&self.device, vec![sphere.clone()]);
-        let id = self.scene.attach(user.build());
+        // This seems to be slower than a user geometry, so keep using that
+        // let embree_sphere = embree::Sphere {
+        //     center: sphere.center,
+        //     radius: sphere.radius,
+        // };
+        // let spheres = embree::SphereGeometry::new(&self.device, vec![embree_sphere]);
+        // let id = self.scene.attach(spheres.build());
+
+        let user = embree::UserGeometry::new(&self.device, vec![(sphere.clone(), 0)]);
+        let id = self.scene.attach_user_geometry(user.build());
+
         self.primitives.insert(id.unwrap() as usize, prim);
         if sphere.is_emissive() {
             self.lights.push((id, Box::new(sphere.clone())));
@@ -142,7 +152,7 @@ impl SceneBuilder {
     }
 
     pub fn add_mesh(&mut self, mesh: embree::TriangleMesh, material: MaterialType) {
-        // TODO: Probably shouldn't expose embree like this
+        // TODO: Maybe shouldn't expose embree API like this
         let id = &self.scene.attach(mesh.build());
         self.primitives.insert(id.unwrap() as usize, Primitive::new(material));
     }

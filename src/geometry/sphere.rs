@@ -1,5 +1,5 @@
 use crate::math::*;
-use embree::*;
+use embree::{Ray, UserPrimHit, UserPrimitive, AABB};
 use crate::colour::*;
 use crate::geometry::{SampleableEmitter, LightSample};
 use crate::sampling::*;

@@ -1,5 +1,5 @@
 pub mod rgb;
-pub mod blackbody;
+// pub mod blackbody;
 pub mod srgb;
 
 pub use self::rgb::*;

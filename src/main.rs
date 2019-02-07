@@ -12,7 +12,6 @@ extern crate vec_map;
 extern crate rayon;
 extern crate serde;
 extern crate serde_json;
-#[macro_use]
 extern crate serde_derive;
 extern crate embree;
 
@@ -41,6 +40,9 @@ use crate::scene::*;
 use crate::path_integrator::*;
 use crate::render_buffer::*;
 use crate::render_settings::*;
+
+const DEFAULT_SPP: u32 = 8;
+const DEFAULT_BOUNCES: u32 = 4;
 
 fn load_scene<P: AsRef<Path>>(path: P) -> Result<tungsten_scene::SceneDescription, Box<Error>> {
     let file = File::open(path)?;
@@ -91,7 +93,11 @@ fn main() {
     let mut render_buffer = RenderBuffer::new(width, height);
 
     // let settings = scene_desc.render_settings();
-    let settings = RenderSettings::default();
+    let settings = RenderSettings {
+        spp: DEFAULT_SPP,
+        max_depth: DEFAULT_BOUNCES,
+        .. scene_desc.render_settings()
+    };
 
     let path_integrator = PathIntegrator::new(scene_builder.build(), &settings);
     println!("{:>16} took: {}", "Scene building", pretty_duration(Instant::now() - build_start));

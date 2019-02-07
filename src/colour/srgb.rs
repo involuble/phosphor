@@ -1,5 +1,3 @@
-// #![allow(dead_code)]
-
 use crate::colour::rgb::*;
 
 use num_traits::*;
@@ -39,6 +37,7 @@ impl sRgb {
 }
 
 /// Takes a gamma corrected value in sRGB space and linearises it
+#[allow(dead_code)]
 fn srgb_to_linear(c: f32) -> f32 {
     if c <= 0.04045 {
         c / 12.92
@@ -54,6 +53,7 @@ fn srgb_to_linear_approx(c_srgb: f32) -> f32 {
 
 /// Takes a value in linear colour space and gamma corrects it to sRGB space.
 /// The input c is a normalised (in [0,1]) float
+#[allow(dead_code)]
 fn linear_to_srgb(c_linear: f32) -> f32 {
     let c = clamp(c_linear, 0.0, 1.0);
     if c < 0.0031308 {

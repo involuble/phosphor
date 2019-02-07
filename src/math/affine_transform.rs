@@ -38,7 +38,7 @@ impl AffineTransform {
         self.scale.x == self.scale.y && self.scale.y == self.scale.z
     }
 
-    pub fn is_isometry(&self) -> bool {
+    pub fn _is_isometry(&self) -> bool {
         self.scale.x.abs() == 1.0 && self.scale.y.abs() == 1.0 && self.scale.z.abs() == 1.0
     }
 }
