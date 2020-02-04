@@ -1,5 +1,5 @@
 use rand::{Rng, SeedableRng};
-use embree::{Hit};
+use embree::{RayHit, Hit};
 use rayon::prelude::*;
 
 use crate::math::*;
@@ -34,7 +34,7 @@ impl PathIntegrator {
         render_buffer.data.par_iter_mut().enumerate().for_each(|(index, pixel)| {
             let x_i = (index as u32) % width;
             let y_i = (index as u32) / width;
-            // if !(x_i == 505 && y_i == 90) { return; }
+            // if !(x_i == 247 && y_i == 242) { return; }
             let x = (x_i as f32) * inv_w;
             let y = (y_i as f32) * inv_h;
 
@@ -63,17 +63,20 @@ impl PathIntegrator {
         let mut reflectance = Colour::new(1.0, 1.0, 1.0);
 
         for depth in 0..self.max_depth {
-            let mut hit = self.scene.intersect(&ray);
+            let mut rayhit = RayHit::from_ray(ray.into());
+            let ray_intersected = self.scene.intersect(&mut rayhit);
+            ray.tfar = rayhit.ray.tfar;
+            let mut hit = rayhit.hit;
 
+            if !ray_intersected {
+                radiance += reflectance * self.scene.skybox_emission(ray.dir);
+                break;
+            }
+            
             if same_hemisphere(hit.Ng, ray.dir) {
                 hit.Ng = -hit.Ng;
             }
-
-            if !hit.is_hit() {
-                radiance += reflectance * self.scene.skybox_emission(camera_ray.dir);
-                break;
-            }
-
+        
             let light_sample = self.scene.emission_at(&camera_ray, &hit);
             let weight = if depth == 0 { 1.0 } else { 0.0 };
             radiance += reflectance * weight * light_sample.radiance;
@@ -89,11 +92,9 @@ impl PathIntegrator {
             } else {
                 reflectance = Colour::zero();
             }
-            debug_assert!(reflectance.r >= 0.0 && reflectance.r <= 1.0, "Reflectance should be in [0,1]");
-            debug_assert!(reflectance.g >= 0.0 && reflectance.g <= 1.0, "Reflectance should be in [0,1]");
-            debug_assert!(reflectance.b >= 0.0 && reflectance.b <= 1.0, "Reflectance should be in [0,1]");
+            debug_assert!(reflectance.r >= 0.0 && reflectance.g >= 0.0 && reflectance.b >= 0.0, "Reflectance should be positive");
 
-            ray = Ray::new(ray.point_at_dist(hit.t), bsdf_sample.w_o, ::std::f32::MAX);
+            ray = Ray::new(ray.point_at_dist(ray.tfar), bsdf_sample.w_o, ::std::f32::MAX);
             ray.offset(hit.Ng);
         }
         radiance
@@ -117,15 +118,17 @@ impl PathIntegrator {
             return Colour::zero();
         }
 
-        let hit_p = ray.point_at_dist(hit.t);
+        let hit_p = ray.point_at_dist(ray.tfar);
         let light_sample = light.sample(rng, hit_p);
 
         let n_dot_l = dot(shading.basis.normal, light_sample.dir);
         if n_dot_l > EPSILON && light_sample.pdf.0 > EPSILON {
             let mut light_ray = Ray::new(hit_p, light_sample.dir, light_sample.distance);
             light_ray.offset(hit.Ng);
-            let light_hit = self.scene.intersect(&light_ray);
-            if light_id == light_hit.geom_id {
+
+            let mut rayhit = RayHit::from_ray(light_ray.into());
+            self.scene.intersect(&mut rayhit);
+            if light_id == rayhit.hit.geom_id {
                 let bsdf_sample = shading.bsdf.eval(&shading.basis, ray.dir, light_sample.dir);
                 return light_sample.radiance * bsdf_sample.reflectance * n_dot_l / light_sample.pdf.0;
             }

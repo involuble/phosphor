@@ -1,6 +1,6 @@
 use cgmath::*;
 use embree;
-use embree::{BuildQuality, SceneFlags, Hit, GeomID};
+use embree::{BuildQuality, SceneFlags, RayHit, Hit, GeomID};
 use vec_map::VecMap;
 
 use crate::math::*;
@@ -14,7 +14,7 @@ pub struct Scene {
     scene: embree::Scene,
     primitives: VecMap<Primitive>,
     skybox: Colour,
-    pub lights: Vec<(GeomID, Box<SampleableEmitter>)>,
+    pub lights: Vec<(GeomID, Box<dyn SampleableEmitter>)>,
 }
 
 struct Primitive {
@@ -42,13 +42,15 @@ pub enum EmissiveGeometry {
 }
 
 pub struct ShadingParameters {
-    pub bsdf: Box<Bsdf>,
+    pub bsdf: Box<dyn Bsdf>,
     pub basis: TangentFrame,
 }
 
 impl Scene {
-    pub fn intersect(&self, ray: &Ray) -> Hit {
-        self.scene.intersect((*ray).into())
+    pub fn intersect(&self, rayhit: &mut RayHit) -> bool {
+        self.scene.intersect(rayhit);
+        rayhit.hit.Ng = rayhit.hit.Ng.normalize();
+        rayhit.hit.is_hit()
     }
 
     pub fn skybox_emission(&self, _dir: Vector3<f32>) -> Colour {
@@ -56,7 +58,7 @@ impl Scene {
     }
 
     pub fn emission_at(&self, ray: &Ray, hit: &Hit) -> LightSample {
-        let p = ray.point_at_dist(hit.t);
+        let p = ray.point_at_dist(ray.tfar);
         let e = &self.primitives[hit.geom_id.unwrap() as usize].emitter;
         match e {
             EmissiveGeometry::NotEmissive => LightSample {
@@ -83,7 +85,7 @@ pub struct SceneBuilder {
     scene: embree::SceneBuilder,
     primitives: VecMap<Primitive>,
     skybox: Colour,
-    lights: Vec<(GeomID, Box<SampleableEmitter>)>,
+    lights: Vec<(GeomID, Box<dyn SampleableEmitter>)>,
 }
 
 impl SceneBuilder {
@@ -121,8 +123,8 @@ impl SceneBuilder {
         // let spheres = embree::SphereGeometry::new(&self.device, vec![embree_sphere]);
         // let id = self.scene.attach(spheres.build());
 
-        let user = embree::UserGeometry::new(&self.device, vec![(sphere.clone(), 0)]);
-        let id = self.scene.attach_user_geometry(user.build());
+        let user = embree::UserGeometry::new(&self.device, vec![sphere.clone()]);
+        let id = self.scene.attach(user);
 
         self.primitives.insert(id.unwrap() as usize, prim);
         if sphere.is_emissive() {
@@ -144,7 +146,7 @@ impl SceneBuilder {
 
         let index = vec![embree::Triangle::new(0, 1, 2), embree::Triangle::new(0, 2, 3)];
         let mesh = embree::TriangleMesh::new(&self.device, index, Vec::from(quad.points().as_ref()));
-        let id = self.scene.attach(mesh.build());
+        let id = self.scene.attach(mesh);
         self.primitives.insert(id.unwrap() as usize, prim);
         if quad.is_emissive() {
             self.lights.push((id, Box::new(quad)));
@@ -153,7 +155,7 @@ impl SceneBuilder {
 
     pub fn add_mesh(&mut self, mesh: embree::TriangleMesh, material: MaterialType) {
         // TODO: Maybe shouldn't expose embree API like this
-        let id = &self.scene.attach(mesh.build());
+        let id = &self.scene.attach(mesh);
         self.primitives.insert(id.unwrap() as usize, Primitive::new(material));
     }
 

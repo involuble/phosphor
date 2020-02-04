@@ -1,5 +1,5 @@
 use crate::math::*;
-use embree::{Ray, UserPrimHit, UserPrimitive, AABB};
+use embree::{Ray, UserPrimHit, UserPrimitive, Bounds};
 use crate::colour::*;
 use crate::geometry::{SampleableEmitter, LightSample};
 use crate::sampling::*;
@@ -94,22 +94,43 @@ impl Transformable for Sphere {
     }
 }
 
+/// Computes a*d - b*c using a numerically stable method from
+///     Kahan, "On the cost of floating-point computation without extra-precise arithmetic"
+fn determinant(a: f32, b: f32, c: f32, d: f32) -> f32 {
+    let w = b * c;
+    let e = f32::mul_add(-b, c, w);
+    let f = f32::mul_add(a, d, -w);
+    f + e
+}
+
+/// Computes a*b - c*d using a numerically stable method from
+///     Kahan, "On the cost of floating-point computation without extra-precise arithmetic"
+///     <https://hal.inria.fr/ensl-00649347/en>
+fn diff_of_products(a: f32, b: f32, c: f32, d: f32) -> f32 {
+    let w = c * d;
+    let e = f32::mul_add(c, d, -w);
+    let f = f32::mul_add(a, b, -w);
+    f - e
+}
+
 impl UserPrimitive for Sphere {
     fn intersect(&self, ray: &Ray) -> UserPrimHit {
+        // Use a numerically stable algorithm from https://en.wikipedia.org/wiki/Loss_of_significance#A_better_algorithm
         let v = ray.origin - self.center;
 
         let a = ray.dir.magnitude2();
         let b = 2.0 * dot(v, ray.dir);
         let c = v.magnitude2() - self.radius * self.radius;
-        let d = b*b - 4.0 * a * c;
+
+        let d = determinant(b, 4.0 * a, c, b);
+
         if d < 0.0 {
             return UserPrimHit::miss()
         }
 
-        let q = d.sqrt();
-        let rcp_a = 1.0 / a;
+        let q = -0.5 * (b + b.signum() * d.sqrt());
 
-        let t0 = 0.5 * rcp_a * (-b - q);
+        let t0 = c / q;
         if ray.in_range(t0) {
             return UserPrimHit {
                 t: t0,
@@ -117,7 +138,8 @@ impl UserPrimitive for Sphere {
                 uv: Vector2::zero(),
             }
         }
-        let t1 = 0.5 * rcp_a * (-b + q);
+        
+        let t1 = q / a;
         if ray.in_range(t1) {
             return UserPrimHit {
                 t: t1,
@@ -128,8 +150,8 @@ impl UserPrimitive for Sphere {
         UserPrimHit::miss()
     }
 
-    fn bounds(&self) -> AABB {
-        AABB::new(
+    fn bounds(&self) -> Bounds {
+        Bounds::new(
             self.center - Vector3::new(self.radius, self.radius, self.radius),
             self.center + Vector3::new(self.radius, self.radius, self.radius))
     }

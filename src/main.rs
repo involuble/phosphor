@@ -9,7 +9,6 @@ extern crate approx;
 extern crate num_traits;
 extern crate rand;
 extern crate rand_pcg;
-extern crate tobj;
 extern crate vec_map;
 extern crate rayon;
 extern crate serde;
