@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::colour::*;
 
 // See https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/

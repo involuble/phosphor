@@ -10,7 +10,7 @@ pub enum MaterialType {
 }
 
 impl Material for MaterialType {
-    fn compute_bsdf(&self, _hit: &embree::Hit) -> Box<Bsdf> {
+    fn compute_bsdf(&self, _hit: &embree::Hit) -> Box<dyn Bsdf> {
         match *self {
             MaterialType::Diffuse(ref l) => Box::new(l.clone()),
         }

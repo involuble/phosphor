@@ -28,7 +28,6 @@ impl ColourSpace for Rec709 {
 /// RGB colour vector in a linear colour space
 #[repr(C)]
 #[derive(PartialEq)]
-// #[derive(Add, Mul, AddAssign, Div)] // Can't derive these because of PhantomData
 pub struct Rgb<S: ColourSpace> {
     pub r: f32,
     pub g: f32,
@@ -61,7 +60,7 @@ impl<S: ColourSpace> Rgb<S> {
     // }
 }
 
-// FIXME: These should be deriveable but isn't yet because of PhantomData
+// FIXME: These should be deriveable but aren't yet because of PhantomData
 impl<S: ColourSpace> Copy for Rgb<S> {}
 impl<S: ColourSpace> Clone for Rgb<S> {
     fn clone(&self) -> Self {
@@ -71,13 +70,25 @@ impl<S: ColourSpace> Clone for Rgb<S> {
 
 impl<S: ColourSpace> fmt::Debug for Rgb<S> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({:?},{:?},{:?})", self.r, self.g, self.b)
+        f.debug_tuple("")
+            .field(&self.r)
+            .field(&self.g)
+            .field(&self.b)
+            .finish()
+        //write!(f, "({:?},{:?},{:?})", self.r, self.g, self.b)
     }
 }
 
 impl<S: ColourSpace> fmt::Display for Rgb<S> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({},{},{})", self.r, self.g, self.b)
+        //write!(f, "({},{},{})", self.r, self.g, self.b)
+        write!(f, "(")?;
+        fmt::Display::fmt(&self.r, f)?;
+        write!(f, ", ")?;
+        fmt::Display::fmt(&self.g, f)?;
+        write!(f, ", ")?;
+        fmt::Display::fmt(&self.b, f)?;
+        write!(f, ")")
     }
 }
 
@@ -129,7 +140,6 @@ impl<S: ColourSpace> MulAssign<Rgb<S>> for Rgb<S> {
     }
 }
 
-// These should be derived
 impl<S: ColourSpace> Add<Rgb<S>> for Rgb<S> {
     type Output = Rgb<S>;
 

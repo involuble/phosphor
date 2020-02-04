@@ -13,8 +13,8 @@ pub trait Boundable {
 
 impl BBox {
     pub fn intersect(&self, ray: Ray) -> bool {
-        // https://tavianator.com/fast-branchless-raybounding-box-intersections-part-2-nans/
-        // TODO: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+        // "A Ray-Box Intersection Algorithm and Efficient Dynamic Voxel Rendering"
+        // http://www.jcgt.org/published/0007/03/04/
         let inv_dir = Vector3::new(1.0 / ray.dir.x, 1.0 / ray.dir.y, 1.0 / ray.dir.z);
         
         let t1 = (self.min[0] - ray.origin[0]) * inv_dir[0];

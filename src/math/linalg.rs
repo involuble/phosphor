@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use cgmath::*;
 
 pub fn polar_angles_to_cartesian(theta: f32, phi: f32) -> Vector3<f32> {

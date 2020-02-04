@@ -20,5 +20,5 @@ pub struct BsdfSample {
 }
 
 pub trait Material {
-    fn compute_bsdf(&self, hit: &embree::Hit) -> Box<Bsdf>;
+    fn compute_bsdf(&self, hit: &embree::Hit) -> Box<dyn Bsdf>;
 }

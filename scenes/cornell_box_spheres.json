@@ -4,9 +4,9 @@
         {
             "name": "LeftWall",
             "albedo": [
-                0.8,
-                0.4,
-                0.0
+                0.82,
+                0.68,
+                0.08
             ],
             "type": "lambert"
         },

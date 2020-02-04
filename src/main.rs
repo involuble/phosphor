@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[macro_use]
 extern crate log;
 extern crate fern;
@@ -44,7 +46,7 @@ use crate::render_settings::*;
 const DEFAULT_SPP: u32 = 8;
 const DEFAULT_BOUNCES: u32 = 4;
 
-fn load_scene<P: AsRef<Path>>(path: P) -> Result<tungsten_scene::SceneDescription, Box<Error>> {
+fn load_scene<P: AsRef<Path>>(path: P) -> Result<tungsten_scene::SceneDescription, Box<dyn Error>> {
     let file = File::open(path)?;
 
     let s = serde_json::from_reader(file)?;
@@ -79,6 +81,7 @@ fn main() {
     let build_start = Instant::now();
     
     let device = embree::Device::new();
+    embree::set_flush_to_zero_mode();
 
     let mut scene_builder = SceneBuilder::new(&device);
 
