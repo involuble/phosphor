@@ -1,7 +1,7 @@
 use crate::colour::rgb::*;
 use crate::colour::srgb::*;
 
-use num_traits::*;
+use num_traits::{clamp};
 
 pub struct Blackbody {
     // Temperature in Kelvin

@@ -10,6 +10,12 @@ pub struct SceneDescription {
     pub renderer: RendererSettings,
 }
 
+impl SceneDescription {
+    pub fn resolution(&self) -> (u32, u32) {
+        (self.camera.resolution[0], self.camera.resolution[1])
+    }
+}
+
 #[derive(Deserialize)]
 pub struct BSDFEntry {
     pub name: String,
@@ -84,6 +90,7 @@ pub struct Transform {
     pub rotation: [f32; 3],
 }
 
+#[derive(Debug, Clone)]
 #[derive(Deserialize)]
 pub struct Camera {
     pub tonemap: String,
@@ -96,6 +103,7 @@ pub struct Camera {
     pub camera_type: String,
 }
 
+#[derive(Debug, Clone)]
 #[derive(Deserialize)]
 pub struct CameraTransform {
     pub position: [f32; 3],

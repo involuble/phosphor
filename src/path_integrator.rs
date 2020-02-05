@@ -8,21 +8,23 @@ use crate::scene::*;
 use crate::colour::*;
 use crate::camera::*;
 use crate::render_buffer::*;
-use crate::render_settings::*;
 use crate::sampling::*;
+
+const DEFAULT_SPP: u32 = 8;
+const DEFAULT_BOUNCES: u32 = 4;
 
 pub struct PathIntegrator {
     scene: Scene,
-    spp: u32,
-    max_depth: u32,
+    pub spp: u32,
+    pub max_depth: u32,
 }
 
 impl PathIntegrator {
-    pub fn new(scene: Scene, settings: &RenderSettings) -> Self {
+    pub fn new(scene: Scene) -> Self {
         PathIntegrator {
             scene: scene,
-            spp: settings.spp,
-            max_depth: settings.max_depth,
+            spp: DEFAULT_SPP,
+            max_depth: DEFAULT_BOUNCES,
         }
     }
 

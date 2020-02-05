@@ -1,6 +1,6 @@
 use crate::colour::rgb::*;
 
-use num_traits::*;
+use num_traits::{clamp};
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -43,7 +43,7 @@ fn srgb_to_linear(c: f32) -> f32 {
         c / 12.92
     } else {
         let a: f32 = 0.055;
-        Float::powf((c+a)/(1.0+a), 2.4)
+        ((c+a)/(1.0+a)).powf(2.4)
     }
 }
 
@@ -60,7 +60,7 @@ fn linear_to_srgb(c_linear: f32) -> f32 {
         12.92 * c
     } else {
         let a: f32 = 0.055;
-        (1.0+a) * Float::powf(c, 1.0/2.4) - a
+        (1.0+a) * c.powf(1.0/2.4) - a
     }
 }
 
@@ -80,7 +80,7 @@ fn u8_to_float(i: u8) -> f32 {
 }
 
 fn float_to_u8(f: f32) -> u8 {
-    Float::floor(f * 255.0 + 0.5) as u8
+    (f * 255.0 + 0.5).floor() as u8
 }
 
 impl From<Rgb<Rec709>> for sRgb {

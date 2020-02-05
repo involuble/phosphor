@@ -17,7 +17,7 @@ impl Quad {
         let edge1 = p1 - p0;
         let edge2 = p3 - p0;
         let normal = edge1.cross(edge2).normalize();
-        assert_relative_eq!(p0 + edge1 + edge2, p2, epsilon=EPSILON);
+        assert!((p0 + edge1 + edge2 - p2).magnitude() < EPSILON, "Using edge representation for a quad causes accuracy problems");
         assert!(normal.magnitude() > EPSILON, "Quad is degenerate");
         Quad {
             p0: p0,

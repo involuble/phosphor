@@ -6,7 +6,7 @@ pub use super::tangent::*;
 // Re-exports
 
 pub use cgmath::*;
-pub use num_traits::{clamp, Zero, One};
+pub use num_traits::{clamp, Zero};
 
 pub use std::cmp::{min, max};
 
@@ -16,4 +16,4 @@ pub const EPSILON: f32 = 1e-5;
 
 pub const INV_PI: f32 = ::std::f32::consts::FRAC_1_PI;
 
-pub use ::std::f32::consts::{PI, FRAC_1_PI};
+pub use ::std::f32::consts::{PI};

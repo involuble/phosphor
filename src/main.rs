@@ -3,17 +3,12 @@
 #[macro_use]
 extern crate log;
 extern crate fern;
-extern crate image;
 extern crate cgmath;
-extern crate approx;
 extern crate num_traits;
 extern crate rand;
 extern crate rand_pcg;
 extern crate vec_map;
 extern crate rayon;
-extern crate serde;
-extern crate serde_json;
-extern crate serde_derive;
 extern crate embree;
 
 mod math;
@@ -28,31 +23,20 @@ mod path_integrator;
 mod camera;
 mod render_buffer;
 mod image_buffer;
-mod render_settings;
-mod tungsten_scene;
-mod tungsten_scene_convert;
 
-use std::error::Error;
-use std::fs::File;
-use std::path::Path;
 use std::time::Instant;
+use std::fs::File;
+use std::io::BufWriter;
+use std::error::Error;
+use std::time::Duration;
+
+use scene_desc::load_scene;
 
 use crate::scene::*;
 use crate::path_integrator::*;
 use crate::render_buffer::*;
-use crate::render_settings::*;
 
-const DEFAULT_SPP: u32 = 8;
-const DEFAULT_BOUNCES: u32 = 4;
-
-fn load_scene<P: AsRef<Path>>(path: P) -> Result<tungsten_scene::SceneDescription, Box<dyn Error>> {
-    let file = File::open(path)?;
-
-    let s = serde_json::from_reader(file)?;
-    Ok(s)
-}
-
-fn pretty_duration(d: ::std::time::Duration) -> String {
+fn pretty_duration(d: Duration) -> String {
     let minutes = d.as_secs() / 60;
     let sec = d.as_secs() % 60;
     let millis = d.subsec_millis();
@@ -69,13 +53,13 @@ fn pretty_duration(d: ::std::time::Duration) -> String {
     pretty
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>{
     fern::Dispatch::new()
         .level(log::LevelFilter::Debug) // Trace is default
         .chain(std::io::stdout())
         // .chain(fern::log_file("render_log.log").expect("Unable to open log file"))
-        .apply()
-        .expect("Unable to initialize logger");
+        .apply()?;
+        // .expect("Unable to initialize logger");
 
     let build_start = Instant::now();
     
@@ -84,24 +68,21 @@ fn main() {
 
     let mut scene_builder = SceneBuilder::new(&device);
 
-    let scene_desc = load_scene("scenes/cornell_box_spheres.json").expect("could not load scene");
-    // let scene_desc = load_scene("scenes/tungsten/cornell-box/scene.json").expect("could not load scene");
+    let scene_desc = load_scene("scenes/cornell_box_spheres.json")?;
+    // let scene_desc = load_scene("scenes/tungsten/cornell-box/scene.json")?;
 
-    let camera = scene_desc.build_camera();
+    let camera = scene_desc.camera.clone().into();
 
-    scene_desc.add_primitives(&mut scene_builder);
+    scene_builder.load_scene(&scene_desc);
 
     let (width, height) = scene_desc.resolution();
     let mut render_buffer = RenderBuffer::new(width, height);
 
-    // let settings = scene_desc.render_settings();
-    let settings = RenderSettings {
-        spp: DEFAULT_SPP,
-        max_depth: DEFAULT_BOUNCES,
-        .. scene_desc.render_settings()
-    };
-
-    let path_integrator = PathIntegrator::new(scene_builder.build(), &settings);
+    let mut path_integrator = PathIntegrator::new(scene_builder.build());
+    if cfg!(not(debug_assertions)) {
+        path_integrator.spp = scene_desc.renderer.spp;
+        path_integrator.max_depth = scene_desc.integrator.max_bounces;
+    }
     println!("{:>16} took: {}", "Scene building", pretty_duration(Instant::now() - build_start));
     let render_start = Instant::now();
     path_integrator.render(&camera, &mut render_buffer);
@@ -112,15 +93,19 @@ fn main() {
     let image_ldr = image.to_ldr();
 
     let path = std::path::Path::new("render.png");
-    let saved = image::save_buffer(
-        path,
-        image_ldr.as_ref(),
-        image.width as u32,
-        image.height as u32,
-        image::RGB(8),
-    );
+    let file = File::create(path)?;
+    let w = BufWriter::new(file);
+
+    let mut encoder = png::Encoder::new(w, image.width as u32, image.height as u32);
+    encoder.set_color(png::ColorType::RGB);
+    encoder.set_depth(png::BitDepth::Eight);
+    let mut writer = encoder.write_header()?;
+    let saved = writer.write_image_data(&image_ldr);
+
     match saved {
         Ok(_) => info!("Image written successfully"),
         Err(e) => error!("Image couldn't be written: {}", e),
-    }
+    };
+
+    Ok(())
 }

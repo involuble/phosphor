@@ -1,0 +1,12 @@
+[package]
+name = "scene_desc"
+version = "0.1.0"
+authors = ["Steven <locke9@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = "1.0.46"
+serde_json = "1"
+serde_derive = "1.0"
+# bincode = "1.0"
+# tobj = "0.1"

@@ -2,6 +2,9 @@ use cgmath::*;
 use embree;
 use embree::{BuildQuality, SceneFlags, RayHit, Hit, GeomID};
 use vec_map::VecMap;
+use std::collections::HashMap;
+
+use scene_desc::SceneDescription;
 
 use crate::math::*;
 use crate::colour::*;
@@ -80,6 +83,56 @@ impl Scene {
     }
 }
 
+fn to_affine_transform(transform: &scene_desc::Transform) -> AffineTransform {
+    let x = Matrix3::from_axis_angle(Vector3::unit_x(), Deg(transform.rotation[0]));
+    let y = Matrix3::from_axis_angle(Vector3::unit_y(), Deg(transform.rotation[1]));
+    let z = Matrix3::from_axis_angle(Vector3::unit_z(), Deg(transform.rotation[2]));
+    AffineTransform {
+        rotation: y * x * z,
+        scale: transform.scale.into(),
+        translation: transform.position.into(),
+    }
+}
+
+const CUBE_VERTICES: [Point3<f32>; 8] = [
+    Point3 { x: -0.5, y: -0.5, z: -0.5 },
+    Point3 { x: -0.5, y: -0.5, z:  0.5 },
+    Point3 { x: -0.5, y:  0.5, z: -0.5 },
+    Point3 { x: -0.5, y:  0.5, z:  0.5 },
+    Point3 { x:  0.5, y: -0.5, z: -0.5 },
+    Point3 { x:  0.5, y: -0.5, z:  0.5 },
+    Point3 { x:  0.5, y:  0.5, z: -0.5 },
+    Point3 { x:  0.5, y:  0.5, z:  0.5 },
+];
+
+const CUBE_INDICES: [embree::Triangle; 12] = [
+    // Left side
+    embree::Triangle { v0: 0, v1: 1, v2: 2 },
+    embree::Triangle { v0: 1, v1: 3, v2: 2 },
+    // Right side
+    embree::Triangle { v0: 4, v1: 6, v2: 5 },
+    embree::Triangle { v0: 5, v1: 6, v2: 7 },
+    // Bottom side
+    embree::Triangle { v0: 0, v1: 4, v2: 1 },
+    embree::Triangle { v0: 1, v1: 4, v2: 5 },
+    // Top side
+    embree::Triangle { v0: 2, v1: 3, v2: 6 },
+    embree::Triangle { v0: 3, v1: 7, v2: 6 },
+    // Front side
+    embree::Triangle { v0: 0, v1: 2, v2: 4 },
+    embree::Triangle { v0: 2, v1: 6, v2: 4 },
+    // Back side
+    embree::Triangle { v0: 1, v1: 5, v2: 3 },
+    embree::Triangle { v0: 3, v1: 5, v2: 7 },
+];
+
+// Source: https://refractiveindex.info/
+// const _METAL_IOR: [(&str, &str, Ior); 3] = [
+//     ("Au", "Gold", Ior { n: [0.15557, 0.42415, 1.3831], k: [3.6024, 2.4721, 1.9155]}),
+//     ("Ag", "Silver", Ior { n: [0.052225, 0.059582, 0.040000], k: [4.4094, 3.5974, 2.6484]}),
+//     ("Cu", "Copper", Ior { n: [0.23780, 1.0066, 1.2404], k: [3.6264, 2.5823, 2.3929]}),
+// ];
+
 pub struct SceneBuilder {
     pub device: embree::Device,
     scene: embree::SceneBuilder,
@@ -100,6 +153,62 @@ impl SceneBuilder {
             scene: s,
             primitives: VecMap::new(),
             lights: Vec::new(),
+        }
+    }
+
+    pub fn load_scene(&mut self, scene: &SceneDescription) {
+        // TODO: do the hashmap  stuff in scene_desc
+        let mut materials = HashMap::new();
+
+        for bsdf in &scene.bsdfs {
+            let albedo = bsdf.albedo.into();
+            #[allow(unreachable_patterns)]
+            let m = match &bsdf.bsdf {
+                scene_desc::BSDF::Lambert {} => {
+                    MaterialType::Diffuse(Lambert::new(albedo))
+                },
+                scene_desc::BSDF::Null => MaterialType::Diffuse(Lambert::new(Colour::zero())),
+                b => {
+                    warn!("Unsupported BSDF type: {:?}", b);
+                    MaterialType::Diffuse(Lambert::new(Colour::zero()))
+                },
+            };
+            materials.insert(bsdf.name.clone(), m);
+        }
+        for prim in &scene.primitives {
+            let mat = materials.get(&prim.bsdf).expect("Undeclared material");
+
+            let transform = to_affine_transform(&prim.transform);
+            let emission = prim.emission.map_or_else(Colour::zero, Into::into);
+
+            #[allow(unreachable_patterns)]
+            match &prim.primitive {
+                scene_desc::PrimitiveType::Sphere => {
+                    let mut sphere = Sphere::unit();
+                    sphere.transform_by(&transform);
+                    sphere.emission = emission;
+                    self.add_sphere(sphere, mat.clone());
+                },
+                scene_desc::PrimitiveType::Quad => {
+                    let mut quad = Quad::new(
+                        Point3::new(-0.5, 0.0, -0.5),
+                        Point3::new( 0.5, 0.0, -0.5),
+                        Point3::new( 0.5, 0.0,  0.5),
+                        Point3::new(-0.5, 0.0,  0.5));
+                    quad.transform_by(&transform);
+                    quad.emission = emission;
+                    self.add_quad(quad, mat.clone());
+                }
+                scene_desc::PrimitiveType::Cube => {
+                    let mut cube = embree::TriangleMesh::new(&self.device,
+                        Vec::from(CUBE_INDICES.as_ref()),
+                        Vec::from(CUBE_VERTICES.as_ref()));
+                    let matrix = transform.to_matrix();
+                    cube.transform_mesh(matrix);
+                    self.add_mesh(cube, mat.clone());
+                }
+                t => warn!("Unknown primitive type: {:?}", t),
+            }
         }
     }
 

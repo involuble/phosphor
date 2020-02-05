@@ -1,6 +1,8 @@
 use std::f32;
 use crate::math::prelude::*;
 
+use scene_desc;
+
 use crate::geometry::*;
 
 pub struct Camera {
@@ -9,6 +11,20 @@ pub struct Camera {
     down: Vector3<f32>,
     right: Vector3<f32>,
     upper_left: Vector3<f32>,
+}
+
+impl From<scene_desc::Camera> for Camera {
+    fn from(camera: scene_desc::Camera) -> Self {
+        let res = camera.resolution;
+        let aspect = (res[0] as f32) / (res[1] as f32);
+        Camera::new(
+            camera.transform.position.into(),
+            camera.transform.look_at.into(),
+            camera.transform.up.into(),
+            Deg(camera.fov_degrees),
+            aspect
+        )
+    }
 }
 
 impl Camera {
