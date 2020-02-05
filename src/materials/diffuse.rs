@@ -1,7 +1,6 @@
 use super::bsdf::*;
 use crate::colour::*;
 use crate::math::*;
-use crate::sampling::*;
 
 #[derive(Debug, Clone)]
 pub struct Lambert {
@@ -16,9 +15,9 @@ impl Lambert {
     }
 }
 
-fn sample_cos_hempisphere<R: Rng>(rng: &mut R) -> (Vector3<f32>, f32) {
-    let u1: f32 = rng.gen();
-    let u2: f32 = rng.gen();
+fn sample_cos_hempisphere(xi: [f32; 2]) -> (Vector3<f32>, f32) {
+    let u1 = xi[0];
+    let u2 = xi[1];
 
     let r: f32 = u1.sqrt();
     let theta = 2.0 * PI * u2;
@@ -32,8 +31,8 @@ fn sample_cos_hempisphere<R: Rng>(rng: &mut R) -> (Vector3<f32>, f32) {
 }
 
 impl Bsdf for Lambert {
-    fn sample(&self, rng: &mut SampleRng, basis: &TangentFrame, _w_i: Vector3<f32>) -> BsdfSample {
-        let (w_o_local, z) = sample_cos_hempisphere(rng);
+    fn sample(&self, xi: [f32; 2], basis: &TangentFrame, _w_i: Vector3<f32>) -> BsdfSample {
+        let (w_o_local, z) = sample_cos_hempisphere(xi);
         BsdfSample {
             reflectance: self.albedo * INV_PI,
             w_o: basis.transform(w_o_local).normalize(),

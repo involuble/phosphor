@@ -2,7 +2,6 @@ use crate::math::*;
 use embree::{Ray, UserPrimHit, UserPrimitive, Bounds};
 use crate::colour::*;
 use crate::geometry::{SampleableEmitter, LightSample};
-use crate::sampling::*;
 
 #[derive(Debug, Clone)]
 pub struct Sphere {
@@ -25,9 +24,9 @@ impl Sphere {
     }
 }
 
-fn sample_cone<R: Rng>(rng: &mut R, cos_theta_max: f32) -> Vector3<f32> {
-    let u1: f32 = rng.gen();
-    let u2: f32 = rng.gen();
+fn sample_cone(xi: [f32; 2], cos_theta_max: f32) -> Vector3<f32> {
+    let u1: f32 = xi[0];
+    let u2: f32 = xi[1];
 
     let cos_theta = (1.0 - u1) + u1*cos_theta_max;
     let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
@@ -51,7 +50,7 @@ impl SampleableEmitter for Sphere {
         }
     }
 
-    fn sample(&self, rng: &mut SampleRng, initial: Point3<f32>) -> LightSample {
+    fn sample(&self, xi: [f32; 2], initial: Point3<f32>) -> LightSample {
         // See https://www.akalin.com/sampling-visible-sphere
         //  if a point on the sphere (rather than a direction) is needed
         let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
@@ -61,7 +60,7 @@ impl SampleableEmitter for Sphere {
         }
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
 
-        let v = sample_cone(rng, cos_theta_max);
+        let v = sample_cone(xi, cos_theta_max);
 
         let dist = self.center.distance(initial);
         let to = (self.center - initial) / dist;
@@ -87,7 +86,7 @@ impl Transformable for Sphere {
     fn transform_by(&mut self, transform: &AffineTransform) {
         // debug_assert!(transform.is_similarity(), "Can't transform sphere by non-uniform scale");
         if !transform.is_similarity() {
-            warn!("Can't transform sphere by non-uniform scale");
+            log::warn!("Can't transform sphere by non-uniform scale");
         }
         self.center = transform.transform_point(self.center);
         self.radius *= transform.scale.x;

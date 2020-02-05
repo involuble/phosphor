@@ -13,11 +13,11 @@ members = [
 ]
 
 [dependencies]
-cgmath = { version = "0.17", features = ["serde"] }
+cgmath = { version = "0.17" }
 log = "0.4"
 fern = "0.5"
-rand = "0.6"
-rand_pcg = "0.1"
+rand_core = "0.5"
+rand_pcg = "0.2"
 png = "0.15"
 num-traits = "0.2"
 vec_map = "0.8"

@@ -1,4 +1,3 @@
-use rand::{Rng, SeedableRng};
 use embree::{RayHit, Hit};
 use rayon::prelude::*;
 
@@ -41,16 +40,16 @@ impl PathIntegrator {
             let y = (y_i as f32) * inv_h;
 
             for sample_i in 0..self.spp {
-                let mut rng = SampleRng::seed_from_u64((x_i * width * self.spp + y_i * self.spp + sample_i) as u64);
-                let r1: f32 = rng.gen();
-                let r2: f32 = rng.gen();
+                let mut rng = PathSample::from_seed(((sample_i as u64) << 48) + (x_i as u64) * 16777259 + (y_i as u64));
+                let r1: f32 = rng.next_f32();
+                let r2: f32 = rng.next_f32();
                 let offset_x = r1 * inv_w;
                 let offset_y = r2 * inv_h;
 
                 let camera_ray = camera.get_ray(x + offset_x, y + offset_y);
                 let mut radiance = self.radiance(&camera_ray, &mut rng);
                 if radiance.is_nan() {
-                    warn!("NaN colour at pixel ({},{})", x_i, y_i);
+                    log::warn!("NaN colour at pixel ({},{})", x_i, y_i);
                     radiance = Colour::new(1.0, 0.4, 0.7); // A vibrant pink colour
                 }
                 pixel.add_sample(radiance);
@@ -58,7 +57,7 @@ impl PathIntegrator {
         })
     }
 
-    pub fn radiance(&self, camera_ray: &Ray, rng: &mut SampleRng) -> Colour {
+    pub fn radiance(&self, camera_ray: &Ray, rng: &mut PathSample) -> Colour {
         let mut ray = *camera_ray;
 
         let mut radiance = Colour::zero();
@@ -87,7 +86,8 @@ impl PathIntegrator {
 
             radiance += reflectance * self.direct_light_sample(rng, &ray, &hit, &shading);
 
-            let bsdf_sample = shading.bsdf.sample(rng, &shading.basis, ray.dir);
+            let xi = rng.next_2d();
+            let bsdf_sample = shading.bsdf.sample(xi, &shading.basis, ray.dir);
 
             if bsdf_sample.pdf.0 > EPSILON {
                 reflectance *= bsdf_sample.reflectance * dot(bsdf_sample.w_o, hit.Ng) / bsdf_sample.pdf.0;
@@ -102,18 +102,12 @@ impl PathIntegrator {
         radiance
     }
 
-    fn direct_light_sample(&self, rng: &mut SampleRng, ray: &Ray, hit: &Hit, shading: &ShadingParameters) -> Colour {
+    fn direct_light_sample(&self, rng: &mut PathSample, ray: &Ray, hit: &Hit, shading: &ShadingParameters) -> Colour {
         if self.scene.lights.len() == 0 {
             return Colour::zero();
         }
 
-        fn rand_select<'a, T>(vec: &'a Vec<T>, rand: u32) -> &'a T {
-            // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
-            let i = ((vec.len() as u64) * (rand as u64)) >> 32;
-            &vec[i as usize]
-        };
-
-        let (light_id, light) = rand_select(&self.scene.lights, rng.gen());
+        let (light_id, light) = &self.scene.lights[rng.next_range(0..self.scene.lights.len() as u32) as usize];
         let light_id = *light_id;
 
         if hit.geom_id == light_id {
@@ -121,7 +115,8 @@ impl PathIntegrator {
         }
 
         let hit_p = ray.point_at_dist(ray.tfar);
-        let light_sample = light.sample(rng, hit_p);
+        let xi = rng.next_2d();
+        let light_sample = light.sample(xi, hit_p);
 
         let n_dot_l = dot(shading.basis.normal, light_sample.dir);
         if n_dot_l > EPSILON && light_sample.pdf.0 > EPSILON {

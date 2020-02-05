@@ -3,7 +3,7 @@ use serde::{Deserialize, Deserializer};
 #[derive(Deserialize)]
 pub struct SceneDescription {
     pub media: Vec<Medium>,
-    pub bsdfs: Vec<BSDFEntry>,
+    pub bsdfs: Vec<Material>,
     pub primitives: Vec<Primitive>,
     pub camera: Camera,
     pub integrator: IntegratorSettings,
@@ -17,11 +17,11 @@ impl SceneDescription {
 }
 
 #[derive(Deserialize)]
-pub struct BSDFEntry {
+pub struct Material {
     pub name: String,
 
     #[serde(flatten)]
-    pub bsdf: BSDF,
+    pub bsdf: MaterialType,
 
     #[serde(deserialize_with = "vector_or_scalar")]
     pub albedo: [f32; 3],
@@ -30,7 +30,7 @@ pub struct BSDFEntry {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type")]
-pub enum BSDF {
+pub enum MaterialType {
     Null,
     Lambert {},
 }

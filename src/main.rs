@@ -1,16 +1,5 @@
 #![allow(dead_code)]
 
-#[macro_use]
-extern crate log;
-extern crate fern;
-extern crate cgmath;
-extern crate num_traits;
-extern crate rand;
-extern crate rand_pcg;
-extern crate vec_map;
-extern crate rayon;
-extern crate embree;
-
 mod math;
 mod colour;
 mod geometry;
@@ -103,8 +92,8 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>{
     let saved = writer.write_image_data(&image_ldr);
 
     match saved {
-        Ok(_) => info!("Image written successfully"),
-        Err(e) => error!("Image couldn't be written: {}", e),
+        Ok(_) => log::info!("Image written successfully"),
+        Err(e) => log::error!("Image couldn't be written: {}", e),
     };
 
     Ok(())

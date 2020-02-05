@@ -160,20 +160,20 @@ impl SceneBuilder {
         // TODO: do the hashmap  stuff in scene_desc
         let mut materials = HashMap::new();
 
-        for bsdf in &scene.bsdfs {
-            let albedo = bsdf.albedo.into();
+        for mat in &scene.bsdfs {
+            let albedo = mat.albedo.into();
             #[allow(unreachable_patterns)]
-            let m = match &bsdf.bsdf {
-                scene_desc::BSDF::Lambert {} => {
+            let m = match &mat.bsdf {
+                scene_desc::MaterialType::Lambert {} => {
                     MaterialType::Diffuse(Lambert::new(albedo))
                 },
-                scene_desc::BSDF::Null => MaterialType::Diffuse(Lambert::new(Colour::zero())),
+                scene_desc::MaterialType::Null => MaterialType::Diffuse(Lambert::new(Colour::zero())),
                 b => {
-                    warn!("Unsupported BSDF type: {:?}", b);
+                    log::warn!("Unsupported BSDF type: {:?}", b);
                     MaterialType::Diffuse(Lambert::new(Colour::zero()))
                 },
             };
-            materials.insert(bsdf.name.clone(), m);
+            materials.insert(mat.name.clone(), m);
         }
         for prim in &scene.primitives {
             let mat = materials.get(&prim.bsdf).expect("Undeclared material");
@@ -207,7 +207,7 @@ impl SceneBuilder {
                     cube.transform_mesh(matrix);
                     self.add_mesh(cube, mat.clone());
                 }
-                t => warn!("Unknown primitive type: {:?}", t),
+                t => log::warn!("Unknown primitive type: {:?}", t),
             }
         }
     }

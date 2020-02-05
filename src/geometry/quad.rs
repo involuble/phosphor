@@ -1,7 +1,6 @@
 use crate::math::*;
 use crate::colour::*;
 use crate::geometry::{SampleableEmitter, LightSample};
-use crate::sampling::*;
 
 #[derive(Debug, Clone)]
 pub struct Quad {
@@ -54,11 +53,8 @@ impl SampleableEmitter for Quad {
         }
     }
 
-    fn sample(&self, rng: &mut SampleRng, initial: Point3<f32>) -> LightSample {
-        let u1 = rng.gen();
-        let u2 = rng.gen();
-
-        let p = self.p0 + self.edge1 * u1 + self.edge2 * u2;
+    fn sample(&self, xi: [f32; 2], initial: Point3<f32>) -> LightSample {
+        let p = self.p0 + self.edge1 * xi[0] + self.edge2 * xi[1];
 
         self.eval_emission_at(initial, p)
     }

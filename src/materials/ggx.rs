@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 
-use rand::{Rng};
-
 use super::bsdf::*;
 use crate::math::*;
 use crate::colour::*;
@@ -60,7 +58,7 @@ impl GGX {
         alpha_sq / (PI * denom * denom)
     }
 
-    fn sample<R: Rng>(&self, _rng: &mut R, _basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample {
+    fn sample(&self, _xi: [f32; 2], _basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample {
         let _w_i = Vector3::new(w_i.x * self.alpha, w_i.y * self.alpha, w_i.z);
         unimplemented!()
     }

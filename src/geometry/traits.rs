@@ -1,10 +1,9 @@
 use crate::math::*;
 use crate::colour::*;
-use crate::sampling::*;
 
 pub trait SampleableEmitter: Send + Sync {
     fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample;
-    fn sample(&self, rng: &mut SampleRng, initial: Point3<f32>) -> LightSample;
+    fn sample(&self, xi: [f32; 2], initial: Point3<f32>) -> LightSample;
 
     fn surface_area(&self) -> f32;
 }
