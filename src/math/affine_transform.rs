@@ -8,29 +8,30 @@ pub trait Transformable {
 #[derive(Debug, Clone, Copy)]
 /// A 3D affine transformation
 pub struct AffineTransform {
-    pub rotation: Matrix3<f32>,
-    pub scale: Vector3<f32>,
-    pub translation: Vector3<f32>,
+    pub rotation: Mat3,
+    pub scale: Vec3,
+    pub translation: Vec3,
 }
 
 impl AffineTransform {
-    pub fn transform_point(&self, p: Point3<f32>) -> Point3<f32> {
-        let scale = Point3::new(self.scale.x, self.scale.y, self.scale.z);
-        self.rotation.transform_point(p).mul_element_wise(scale) + self.translation
+    pub fn transform_point(&self, p: Vec3) -> Vec3 {
+        let scale = Vec3::new(self.scale.x, self.scale.y, self.scale.z);
+        (self.rotation * p) * scale + self.translation
     }
 
-    pub fn transform_normal(&self, v: Vector3<f32>) -> Vector3<f32> {
+    pub fn transform_normal(&self, v: Vec3) -> Vec3 {
         self.rotation * v
     }
 
-    pub fn transform_vector(&self, v: Vector3<f32>) -> Vector3<f32> {
-        (self.rotation * v).mul_element_wise(self.scale)
+    pub fn transform_vector(&self, v: Vec3) -> Vec3 {
+        (self.rotation * v) * self.scale
     }
 
-    pub fn to_matrix(&self) -> Matrix4<f32> {
-        let mut m = Matrix4::from(self.rotation);
-        m = m * Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, self.scale.z);
-        m.w = self.translation.extend(1.0);
+    pub fn to_matrix(&self) -> Mat4 {
+        // switch to Quaternion? 
+        let mut m: Mat4 = mat4(self.rotation.x_axis.extend(0.0), self.rotation.y_axis.extend(0.0), self.rotation.z_axis.extend(0.0), vec4(0.0, 0.0, 0.0, 1.0));
+        m = m * Mat4::from_scale(self.scale);
+        m.w_axis = self.translation.extend(1.0);
         m
     }
 

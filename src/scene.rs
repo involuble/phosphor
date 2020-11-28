@@ -1,4 +1,4 @@
-use cgmath::*;
+use glam::*;
 use embree;
 use embree::{BuildQuality, SceneFlags, RayHit, Hit, GeomID};
 use vec_map::VecMap;
@@ -28,7 +28,7 @@ pub enum MaterialType {
 struct Primitive {
     pub emitter: EmissiveGeometry,
     pub material: MaterialType,
-    // pub tex_scale: Vector2<f32>,
+    // pub tex_scale: Vec2,
     // pub normal_map: Texture,
 }
 
@@ -64,7 +64,7 @@ impl Scene {
         self.scene.occluded(ray)
     }
 
-    pub fn skybox_emission(&self, _dir: Vector3<f32>) -> Colour {
+    pub fn skybox_emission(&self, _dir: Vec3) -> Colour {
         self.skybox
     }
 
@@ -73,7 +73,7 @@ impl Scene {
         let e = &self.primitives[hit.geom_id.unwrap() as usize].emitter;
         match e {
             EmissiveGeometry::NotEmissive => LightSample {
-                dir: Vector3::zero(),
+                dir: Vec3::zero(),
                 distance: 0.0,
                 radiance: Colour::zero(),
                 pdf: PdfW(1.0),
@@ -92,9 +92,9 @@ impl Scene {
 }
 
 fn to_affine_transform(transform: &scene_import::Transform) -> AffineTransform {
-    let x = Matrix3::from_axis_angle(Vector3::unit_x(), Deg(transform.rotation[0]));
-    let y = Matrix3::from_axis_angle(Vector3::unit_y(), Deg(transform.rotation[1]));
-    let z = Matrix3::from_axis_angle(Vector3::unit_z(), Deg(transform.rotation[2]));
+    let x = Mat3::from_axis_angle(Vec3::unit_x(), transform.rotation[0] * PI / 180.0);
+    let y = Mat3::from_axis_angle(Vec3::unit_y(), transform.rotation[1] * PI / 180.0);
+    let z = Mat3::from_axis_angle(Vec3::unit_z(), transform.rotation[2] * PI / 180.0);
     AffineTransform {
         rotation: y * x * z,
         scale: transform.scale.into(),
@@ -102,15 +102,15 @@ fn to_affine_transform(transform: &scene_import::Transform) -> AffineTransform {
     }
 }
 
-const CUBE_VERTICES: [Point3<f32>; 8] = [
-    Point3 { x: -0.5, y: -0.5, z: -0.5 },
-    Point3 { x: -0.5, y: -0.5, z:  0.5 },
-    Point3 { x: -0.5, y:  0.5, z: -0.5 },
-    Point3 { x: -0.5, y:  0.5, z:  0.5 },
-    Point3 { x:  0.5, y: -0.5, z: -0.5 },
-    Point3 { x:  0.5, y: -0.5, z:  0.5 },
-    Point3 { x:  0.5, y:  0.5, z: -0.5 },
-    Point3 { x:  0.5, y:  0.5, z:  0.5 },
+const CUBE_VERTICES: [Vec3; 8] = [
+    Vec3 { x: -0.5, y: -0.5, z: -0.5 },
+    Vec3 { x: -0.5, y: -0.5, z:  0.5 },
+    Vec3 { x: -0.5, y:  0.5, z: -0.5 },
+    Vec3 { x: -0.5, y:  0.5, z:  0.5 },
+    Vec3 { x:  0.5, y: -0.5, z: -0.5 },
+    Vec3 { x:  0.5, y: -0.5, z:  0.5 },
+    Vec3 { x:  0.5, y:  0.5, z: -0.5 },
+    Vec3 { x:  0.5, y:  0.5, z:  0.5 },
 ];
 
 const CUBE_INDICES: [embree::IndexedTriangle; 12] = [
@@ -199,10 +199,10 @@ impl SceneBuilder {
                 },
                 scene_import::PrimitiveType::Quad => {
                     let mut quad = Quad::new(
-                        Point3::new(-0.5, 0.0, -0.5),
-                        Point3::new( 0.5, 0.0, -0.5),
-                        Point3::new( 0.5, 0.0,  0.5),
-                        Point3::new(-0.5, 0.0,  0.5));
+                        Vec3::new(-0.5, 0.0, -0.5),
+                        Vec3::new( 0.5, 0.0, -0.5),
+                        Vec3::new( 0.5, 0.0,  0.5),
+                        Vec3::new(-0.5, 0.0,  0.5));
                     quad.transform_by(&transform);
                     quad.emission = emission;
                     self.add_quad(quad, mat.clone());

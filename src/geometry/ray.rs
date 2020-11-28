@@ -4,13 +4,13 @@ use embree;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Ray {
-    pub origin: Point3<f32>,
-    pub dir: Vector3<f32>,
+    pub origin: Vec3,
+    pub dir: Vec3,
     pub tfar: f32,
 }
 
 impl Ray {
-    pub fn new(origin: Point3<f32>, dir: Vector3<f32>, tfar: f32) -> Self {
+    pub fn new(origin: Vec3, dir: Vec3, tfar: f32) -> Self {
         debug_assert!(tfar > 0.0, "Invalid tfar");
         Ray {
             origin: origin,
@@ -23,12 +23,12 @@ impl Ray {
     //     t >= 0.0 && t < self.tfar
     // }
 
-    pub fn point_at_dist(&self, t: f32) -> Point3<f32> {
+    pub fn point_at_dist(&self, t: f32) -> Vec3 {
         self.origin + t*self.dir
     }
 
     /// Offset the ray away from its origin. This is to avoid precision issues
-    pub fn offset(&mut self, offset_dir: Vector3<f32>) {
+    pub fn offset(&mut self, offset_dir: Vec3) {
         self.origin += offset_dir * EPSILON;
     }
 }

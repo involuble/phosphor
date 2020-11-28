@@ -4,20 +4,20 @@ use crate::geometry::{SampleableEmitter, LightSample};
 
 #[derive(Debug, Clone)]
 pub struct Quad {
-    p0: Point3<f32>,
-    edge1: Vector3<f32>,
-    edge2: Vector3<f32>,
-    normal: Vector3<f32>,
+    p0: Vec3,
+    edge1: Vec3,
+    edge2: Vec3,
+    normal: Vec3,
     pub emission: Colour,
 }
 
 impl Quad {
-    pub fn new(p0: Point3<f32>, p1: Point3<f32>, p2: Point3<f32>, p3: Point3<f32>) -> Quad {
+    pub fn new(p0: Vec3, p1: Vec3, p2: Vec3, p3: Vec3) -> Quad {
         let edge1 = p1 - p0;
         let edge2 = p3 - p0;
         let normal = edge1.cross(edge2).normalize();
-        assert!((p0 + edge1 + edge2 - p2).magnitude() < EPSILON, "Using edge representation for a quad causes accuracy problems");
-        assert!(normal.magnitude() > EPSILON, "Quad is degenerate");
+        assert!((p0 + edge1 + edge2 - p2).length() < EPSILON, "Using edge representation for a quad causes accuracy problems");
+        assert!(normal.length() > EPSILON, "Quad is degenerate");
         Quad {
             p0: p0,
             edge1: edge1,
@@ -31,7 +31,7 @@ impl Quad {
         !self.emission.is_zero()
     }
 
-    pub fn points(&self) -> [Point3<f32>; 4] {
+    pub fn points(&self) -> [Vec3; 4] {
         [self.p0,
          self.p0 + self.edge1,
          self.p0 + self.edge1 + self.edge2,
@@ -40,9 +40,9 @@ impl Quad {
 }
 
 impl SampleableEmitter for Quad {
-    fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample {
+    fn eval_emission_at(&self, initial: Vec3, p: Vec3) -> LightSample {
         let pdf = PdfA(1.0 / self.surface_area());
-        let dist = (p - initial).magnitude();
+        let dist = (p - initial).length();
         let dir = (p - initial) / dist;
         let cos_theta = dot(self.normal, dir).max(0.0);
         LightSample {
@@ -53,14 +53,14 @@ impl SampleableEmitter for Quad {
         }
     }
 
-    fn sample(&self, xi: [f32; 2], initial: Point3<f32>) -> LightSample {
+    fn sample(&self, xi: [f32; 2], initial: Vec3) -> LightSample {
         let p = self.p0 + self.edge1 * xi[0] + self.edge2 * xi[1];
 
         self.eval_emission_at(initial, p)
     }
 
     fn surface_area(&self) -> f32 {
-        self.normal.magnitude()
+        self.normal.length()
     }
 }
 

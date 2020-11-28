@@ -13,7 +13,7 @@ members = [
 ]
 
 [dependencies]
-cgmath = { version = "0.17", default-features = false }
+glam = { version = "0.11" }
 log = "0.4"
 fern = "0.5"
 rand_core = "0.5"

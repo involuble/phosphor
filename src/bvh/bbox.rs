@@ -1,10 +1,10 @@
-use cgmath::*;
+use glam::*;
 
 use geometry::*;
 
 pub struct AABBox {
-    pub min: Point3<f32>,
-    pub max: Point3<f32>,
+    pub min: Vec3
+    pub max: Vec3
 }
 
 pub trait Boundable {
@@ -15,7 +15,7 @@ impl AABBox {
     pub fn intersect(&self, ray: Ray) -> bool {
         // "A Ray-Box Intersection Algorithm and Efficient Dynamic Voxel Rendering"
         // http://www.jcgt.org/published/0007/03/04/
-        let inv_dir = Vector3::new(1.0 / ray.dir.x, 1.0 / ray.dir.y, 1.0 / ray.dir.z);
+        let inv_dir = Vec3ew(1.0 / ray.dir.x, 1.0 / ray.dir.y, 1.0 / ray.dir.z);
         
         let t1 = (self.min[0] - ray.origin[0]) * inv_dir[0];
         let t2 = (self.max[0] - ray.origin[0]) * inv_dir[0];
@@ -35,8 +35,8 @@ impl AABBox {
     }
 
     pub fn union(b1: AABBox, b2: AABBox) -> AABBox {
-        let min = Vector3::new(min(b1[0], b2[0]), min(b1[1], b2[1]), min(b1[2], b2[2]));
-        let max = Vector3::new(max(b1[0], b2[0]), max(b1[1], b2[1]), max(b1[2], b2[2]));
+        let min = Vec3ew(min(b1[0], b2[0]), min(b1[1], b2[1]), min(b1[2], b2[2]));
+        let max = Vec3ew(max(b1[0], b2[0]), max(b1[1], b2[1]), max(b1[2], b2[2]));
         AABBox { min, max }
     }
 

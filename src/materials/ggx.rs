@@ -10,7 +10,7 @@ pub struct GGX {
 }
 
 impl GGX {
-    fn lambda(&self, basis: &TangentFrame, v: Vector3<f32>) -> f32 {
+    fn lambda(&self, basis: &TangentFrame, v: Vec3) -> f32 {
         // Section 5.3 Eq. (72) in [Heitz2014Microfacet]
         let vdotn = dot(basis.normal, v);
 
@@ -28,7 +28,7 @@ impl GGX {
     }
 
     #[allow(non_snake_case)]
-    fn G(&self, basis: &TangentFrame, w_i: Vector3<f32>, w_o: Vector3<f32>, m:  Vector3<f32>) -> f32 {
+    fn G(&self, basis: &TangentFrame, w_i: Vec3, w_o: Vec3, m:  Vec3) -> f32 {
         // This is the height correlated masking and shadowing function for GGX
         // See Eq. (99)
         // Ref: Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs
@@ -46,7 +46,7 @@ impl GGX {
         1.0 / (1.0 + self.lambda(basis, w_i) + self.lambda(basis, w_o))
     }
 
-    fn ndf(&self, basis: &TangentFrame, m: Vector3<f32>) -> f32 {
+    fn ndf(&self, basis: &TangentFrame, m: Vec3) -> f32 {
         let alpha_sq = self.alpha * self.alpha;
         let cos_h = dot(basis.normal, m);
 
@@ -58,12 +58,12 @@ impl GGX {
         alpha_sq / (PI * denom * denom)
     }
 
-    fn sample(&self, _xi: [f32; 2], _basis: &TangentFrame, w_i: Vector3<f32>) -> BsdfSample {
-        let _w_i = Vector3::new(w_i.x * self.alpha, w_i.y * self.alpha, w_i.z);
+    fn sample(&self, _xi: [f32; 2], _basis: &TangentFrame, w_i: Vec3) -> BsdfSample {
+        let _w_i = Vec3::new(w_i.x * self.alpha, w_i.y * self.alpha, w_i.z);
         unimplemented!()
     }
 
-    fn eval(&self, basis: &TangentFrame, w_i: Vector3<f32>, w_o: Vector3<f32>) -> BsdfSample {
+    fn eval(&self, basis: &TangentFrame, w_i: Vec3, w_o: Vec3) -> BsdfSample {
         let m = (w_o + w_i).normalize();
         
         let idotn = dot(w_i, basis.normal);

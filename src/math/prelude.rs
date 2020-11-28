@@ -5,8 +5,12 @@ pub use super::tangent::*;
 
 // Re-exports
 
-pub use cgmath::*;
+pub use glam::*;
 pub use num_traits::{clamp, Zero};
+
+pub fn dot(a: Vec3, b: Vec3) -> f32 {
+    a.dot(b)
+}
 
 pub use std::cmp::{min, max};
 

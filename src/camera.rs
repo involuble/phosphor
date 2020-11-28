@@ -6,11 +6,11 @@ use scene_import;
 use crate::geometry::*;
 
 pub struct Camera {
-    pub origin: Point3<f32>,
-    forward: Vector3<f32>,
-    down: Vector3<f32>,
-    right: Vector3<f32>,
-    upper_left: Vector3<f32>,
+    pub origin: Vec3,
+    forward: Vec3,
+    down: Vec3,
+    right: Vec3,
+    upper_left: Vec3,
 }
 
 impl From<scene_import::Camera> for Camera {
@@ -21,17 +21,17 @@ impl From<scene_import::Camera> for Camera {
             camera.transform.position.into(),
             camera.transform.look_at.into(),
             camera.transform.up.into(),
-            Deg(camera.fov_degrees),
+            camera.fov_degrees,
             aspect
         )
     }
 }
 
 impl Camera {
-    pub fn new(origin: Point3<f32>, look_at: Point3<f32>, up: Vector3<f32>, fov_vertical: Deg<f32>, aspect_ratio: f32) -> Self {
+    pub fn new(origin: Vec3, look_at: Vec3, up: Vec3, fov_vertical_degrees: f32, aspect_ratio: f32) -> Self {
         let forward = (look_at - origin).normalize();
-        let fov: Rad<f32> = fov_vertical.into();
-        let half_height = (fov.0 / 2.0).tan();
+        let fov: f32 = fov_vertical_degrees * PI / 180.0;
+        let half_height = (fov / 2.0).tan();
         let half_width  = half_height * aspect_ratio;
         let right = forward.cross(up).normalize();
         let down = forward.cross(right).normalize();

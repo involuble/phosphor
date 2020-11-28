@@ -5,7 +5,7 @@ use crate::geometry::{SampleableEmitter, LightSample};
 
 #[derive(Debug, Clone)]
 pub struct Sphere {
-    pub center: Point3<f32>,
+    pub center: Vec3,
     pub radius: f32,
     pub emission: Colour,
 }
@@ -13,7 +13,7 @@ pub struct Sphere {
 impl Sphere {
     pub fn unit() -> Self {
         Sphere {
-            center: Point3::origin(),
+            center: Vec3::zero(),
             radius: 1.0,
             emission: Colour::zero(),
         }
@@ -24,7 +24,7 @@ impl Sphere {
     }
 }
 
-fn sample_cone(xi: [f32; 2], cos_theta_max: f32) -> Vector3<f32> {
+fn sample_cone(xi: [f32; 2], cos_theta_max: f32) -> Vec3 {
     let u1: f32 = xi[0];
     let u2: f32 = xi[1];
 
@@ -37,8 +37,8 @@ fn sample_cone(xi: [f32; 2], cos_theta_max: f32) -> Vector3<f32> {
 }
 
 impl SampleableEmitter for Sphere {
-    fn eval_emission_at(&self, initial: Point3<f32>, p: Point3<f32>) -> LightSample {
-        let distance = self.center.distance2(initial);
+    fn eval_emission_at(&self, initial: Vec3, p: Vec3) -> LightSample {
+        let distance = self.center.distance_squared(initial);
         let sin_theta_max2 = self.radius * self.radius / (distance * distance);
         let cos_theta_max = (1.0 - sin_theta_max2).sqrt();
         let pdf = 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
@@ -50,10 +50,10 @@ impl SampleableEmitter for Sphere {
         }
     }
 
-    fn sample(&self, xi: [f32; 2], initial: Point3<f32>) -> LightSample {
+    fn sample(&self, xi: [f32; 2], initial: Vec3) -> LightSample {
         // See https://www.akalin.com/sampling-visible-sphere
         //  if a point on the sphere (rather than a direction) is needed
-        let sin_theta_max2 = self.radius * self.radius / self.center.distance2(initial);
+        let sin_theta_max2 = self.radius * self.radius / self.center.distance_squared(initial);
         if sin_theta_max2 >= 1.0 {
             // Sample by uniform area
             unimplemented!();
@@ -67,7 +67,7 @@ impl SampleableEmitter for Sphere {
         let (cone_x, cone_y) = make_orthonormal_basis(to);
 
         let d = v.x * cone_x + v.y * cone_y + v.z * to;
-        debug_assert!(relative_eq!(d.magnitude(), 1.0, epsilon=EPSILON));
+        debug_assert!((d.length() - 1.0).abs() < EPSILON);
 
         LightSample {
             dir: d,
@@ -117,9 +117,9 @@ impl UserPrimitive for Sphere {
         // Use a numerically stable algorithm from https://en.wikipedia.org/wiki/Loss_of_significance#A_better_algorithm
         let v = ray.origin - self.center;
 
-        let a = ray.dir.magnitude2();
+        let a = ray.dir.length_squared();
         let b = 2.0 * dot(v, ray.dir);
-        let c = v.magnitude2() - self.radius * self.radius;
+        let c = v.length_squared() - self.radius * self.radius;
 
         let d = determinant(b, 4.0 * a, c, b);
 
@@ -134,7 +134,7 @@ impl UserPrimitive for Sphere {
             return UserPrimHit {
                 t: t0,
                 Ng: ray.point_at_dist(t0) - self.center,
-                uv: Vector2::zero(),
+                uv: Vec2::zero(),
             }
         }
         
@@ -143,7 +143,7 @@ impl UserPrimitive for Sphere {
             return UserPrimHit {
                 t: t1,
                 Ng: ray.point_at_dist(t1) - self.center,
-                uv: Vector2::zero(),
+                uv: Vec2::zero(),
             }
         }
         UserPrimHit::miss()
@@ -151,7 +151,7 @@ impl UserPrimitive for Sphere {
 
     fn bounds(&self) -> Bounds {
         Bounds::new(
-            self.center - Vector3::new(self.radius, self.radius, self.radius),
-            self.center + Vector3::new(self.radius, self.radius, self.radius))
+            self.center - Vec3::new(self.radius, self.radius, self.radius),
+            self.center + Vec3::new(self.radius, self.radius, self.radius))
     }
 }

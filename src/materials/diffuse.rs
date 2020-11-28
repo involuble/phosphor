@@ -15,7 +15,7 @@ impl Lambert {
     }
 }
 
-fn sample_cos_hempisphere(xi: [f32; 2]) -> (Vector3<f32>, f32) {
+fn sample_cos_hempisphere(xi: [f32; 2]) -> (Vec3, f32) {
     let u1 = xi[0];
     let u2 = xi[1];
 
@@ -27,11 +27,11 @@ fn sample_cos_hempisphere(xi: [f32; 2]) -> (Vector3<f32>, f32) {
 
     let z = (1.0 - u1).sqrt();
 
-    (Vector3::new(r * c_t, r * s_t, z), z)
+    (Vec3::new(r * c_t, r * s_t, z), z)
 }
 
 impl Bsdf for Lambert {
-    fn sample(&self, xi: [f32; 2], basis: &TangentFrame, _w_i: Vector3<f32>) -> BsdfSample {
+    fn sample(&self, xi: [f32; 2], basis: &TangentFrame, _w_i: Vec3) -> BsdfSample {
         let (w_o_local, z) = sample_cos_hempisphere(xi);
         BsdfSample {
             reflectance: self.albedo * INV_PI,
@@ -40,7 +40,7 @@ impl Bsdf for Lambert {
         }
     }
 
-    fn eval(&self, basis: &TangentFrame, _w_i: Vector3<f32>, w_o: Vector3<f32>) -> BsdfSample {
+    fn eval(&self, basis: &TangentFrame, _w_i: Vec3, w_o: Vec3) -> BsdfSample {
         BsdfSample {
             reflectance: self.albedo * INV_PI,
             w_o: w_o,
