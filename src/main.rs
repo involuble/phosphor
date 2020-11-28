@@ -20,7 +20,7 @@ use std::fmt;
 
 use argh::FromArgs;
 
-use scene_desc::load_scene;
+use scene_import::load_scene;
 
 use crate::scene::*;
 use crate::path_integrator::*;
@@ -28,7 +28,7 @@ use crate::render_buffer::*;
 
 /// Render the given scene file
 #[derive(FromArgs)]
-struct RenderCommand {
+struct Args {
     /// samples per pixel
     #[argh(option, short = 's')]
     samples: Option<u32>,
@@ -77,7 +77,7 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>{
         .apply()?;
         // .expect("Unable to initialize logger");
     
-    let config: RenderCommand = argh::from_env();
+    let config: Args = argh::from_env();
 
     let build_timer = Timer::start();
     

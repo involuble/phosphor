@@ -1,7 +1,7 @@
 use std::f32;
 use crate::math::prelude::*;
 
-use scene_desc;
+use scene_import;
 
 use crate::geometry::*;
 
@@ -13,8 +13,8 @@ pub struct Camera {
     upper_left: Vector3<f32>,
 }
 
-impl From<scene_desc::Camera> for Camera {
-    fn from(camera: scene_desc::Camera) -> Self {
+impl From<scene_import::Camera> for Camera {
+    fn from(camera: scene_import::Camera) -> Self {
         let res = camera.resolution;
         let aspect = (res[0] as f32) / (res[1] as f32);
         Camera::new(

@@ -124,7 +124,10 @@ impl PathIntegrator {
             let mut light_ray = Ray::new(hit_p, light_sample.dir, light_sample.distance);
             light_ray.offset(hit.Ng);
 
-            let mut rayhit = RayHit::from_ray(light_ray.into());
+            let light_ray = light_ray.into();
+            // let occluded = self.scene.occluded(&mut light_ray);
+            // if !occluded {
+            let mut rayhit = RayHit::from_ray(light_ray);
             self.scene.intersect(&mut rayhit);
             if light_id == rayhit.hit.geom_id {
                 let bsdf_sample = bsdf.eval(&shading.basis, ray.dir, light_sample.dir);

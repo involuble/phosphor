@@ -4,7 +4,7 @@ use embree::{BuildQuality, SceneFlags, RayHit, Hit, GeomID};
 use vec_map::VecMap;
 use std::collections::HashMap;
 
-use scene_desc::SceneDescription;
+use scene_import::SceneDescription;
 
 use crate::math::*;
 use crate::colour::*;
@@ -22,6 +22,7 @@ pub struct Scene {
 #[derive(Debug, Clone)]
 pub enum MaterialType {
     Diffuse(Lambert),
+    // Null,
 }
 
 struct Primitive {
@@ -59,6 +60,10 @@ impl Scene {
         rayhit.hit.is_hit()
     }
 
+    pub fn occluded(&self, ray: &mut embree::Ray) -> bool {
+        self.scene.occluded(ray)
+    }
+
     pub fn skybox_emission(&self, _dir: Vector3<f32>) -> Colour {
         self.skybox
     }
@@ -86,7 +91,7 @@ impl Scene {
     }
 }
 
-fn to_affine_transform(transform: &scene_desc::Transform) -> AffineTransform {
+fn to_affine_transform(transform: &scene_import::Transform) -> AffineTransform {
     let x = Matrix3::from_axis_angle(Vector3::unit_x(), Deg(transform.rotation[0]));
     let y = Matrix3::from_axis_angle(Vector3::unit_y(), Deg(transform.rotation[1]));
     let z = Matrix3::from_axis_angle(Vector3::unit_z(), Deg(transform.rotation[2]));
@@ -167,10 +172,10 @@ impl SceneBuilder {
             let albedo = mat.albedo.into();
             #[allow(unreachable_patterns)]
             let m = match &mat.bsdf {
-                scene_desc::MaterialType::Lambert {} => {
+                scene_import::MaterialType::Lambert {} => {
                     MaterialType::Diffuse(Lambert::new(albedo))
                 },
-                scene_desc::MaterialType::Null => MaterialType::Diffuse(Lambert::new(Colour::zero())),
+                scene_import::MaterialType::Null => MaterialType::Diffuse(Lambert::new(Colour::zero())),
                 b => {
                     log::warn!("Unsupported BSDF type: {:?}", b);
                     MaterialType::Diffuse(Lambert::new(Colour::zero()))
@@ -186,13 +191,13 @@ impl SceneBuilder {
 
             #[allow(unreachable_patterns)]
             match &prim.primitive {
-                scene_desc::PrimitiveType::Sphere => {
+                scene_import::PrimitiveType::Sphere => {
                     let mut sphere = Sphere::unit();
                     sphere.transform_by(&transform);
                     sphere.emission = emission;
                     self.add_sphere(sphere, mat.clone());
                 },
-                scene_desc::PrimitiveType::Quad => {
+                scene_import::PrimitiveType::Quad => {
                     let mut quad = Quad::new(
                         Point3::new(-0.5, 0.0, -0.5),
                         Point3::new( 0.5, 0.0, -0.5),
@@ -202,7 +207,7 @@ impl SceneBuilder {
                     quad.emission = emission;
                     self.add_quad(quad, mat.clone());
                 }
-                scene_desc::PrimitiveType::Cube => {
+                scene_import::PrimitiveType::Cube => {
                     let mut cube = embree::TriangleMesh::new(&self.device,
                         Vec::from(CUBE_INDICES.as_ref()),
                         Vec::from(CUBE_VERTICES.as_ref()));
