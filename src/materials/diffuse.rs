@@ -10,7 +10,7 @@ pub struct Lambert {
 impl Lambert {
     pub fn new(albedo: Colour) -> Self {
         Lambert {
-            albedo: albedo,
+            albedo,
         }
     }
 }

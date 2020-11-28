@@ -6,7 +6,6 @@ mod geometry;
 mod materials;
 mod sampling;
 
-mod material_type;
 mod scene;
 mod path_integrator;
 mod camera;
@@ -17,7 +16,9 @@ use std::time::Instant;
 use std::fs::File;
 use std::io::BufWriter;
 use std::error::Error;
-use std::time::Duration;
+use std::fmt;
+
+use argh::FromArgs;
 
 use scene_desc::load_scene;
 
@@ -25,22 +26,48 @@ use crate::scene::*;
 use crate::path_integrator::*;
 use crate::render_buffer::*;
 
-fn pretty_duration(d: Duration) -> String {
-    let minutes = d.as_secs() / 60;
-    let sec = d.as_secs() % 60;
-    let millis = d.subsec_millis();
-    let pretty;
-    if minutes > 30 {
-        let hours = minutes / 60;
-        let minutes = minutes % 60;
-        pretty = format!("{:02}h{:02}m", hours, minutes);
-    } else if minutes > 0 {
-        pretty = format!("{}m{}s", minutes, sec);
-    } else {
-        pretty = format!("{}.{:03}s", sec, millis);
-    }
-    pretty
+/// Render the given scene file
+#[derive(FromArgs)]
+struct RenderCommand {
+    /// samples per pixel
+    #[argh(option, short = 's')]
+    samples: Option<u32>,
+    /// input scene file
+    #[argh(positional)]
+    scene_file: String,
 }
+
+struct Timer {
+    start: Instant,
+}
+
+impl Timer {
+    pub fn start() -> Self {
+        Timer { start: Instant::now() }
+    }
+}
+
+impl fmt::Display for Timer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let d = Instant::now() - self.start;
+
+        let minutes = d.as_secs() / 60;
+        let sec = d.as_secs() % 60;
+        let millis = d.subsec_millis();
+        if minutes > 30 {
+            let hours = minutes / 60;
+            let minutes = minutes % 60;
+            write!(f, "{:02}h{:02}m", hours, minutes)
+        } else if minutes > 0 {
+            write!(f, "{}m{}s", minutes, sec)
+        } else {
+            write!(f, "{}.{:03}s", sec, millis)
+        }
+    }
+}
+
+const DEFAULT_SPP: u32 = 8;
+const DEFAULT_BOUNCES: u32 = 4;
 
 fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>{
     fern::Dispatch::new()
@@ -49,16 +76,17 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>{
         // .chain(fern::log_file("render_log.log").expect("Unable to open log file"))
         .apply()?;
         // .expect("Unable to initialize logger");
+    
+    let config: RenderCommand = argh::from_env();
 
-    let build_start = Instant::now();
+    let build_timer = Timer::start();
     
     let device = embree::Device::new();
     embree::set_flush_to_zero_mode();
 
     let mut scene_builder = SceneBuilder::new(&device);
 
-    let scene_desc = load_scene("scenes/cornell_box_spheres.json")?;
-    // let scene_desc = load_scene("scenes/tungsten/cornell-box/scene.json")?;
+    let scene_desc = load_scene(config.scene_file)?;
 
     let camera = scene_desc.camera.clone().into();
 
@@ -67,15 +95,16 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>{
     let (width, height) = scene_desc.resolution();
     let mut render_buffer = RenderBuffer::new(width, height);
 
-    let mut path_integrator = PathIntegrator::new(scene_builder.build());
+    let spp = config.samples.unwrap_or(DEFAULT_SPP);
+    let mut path_integrator = PathIntegrator::new(scene_builder.build(), spp, DEFAULT_BOUNCES);
     if cfg!(not(debug_assertions)) {
         path_integrator.spp = scene_desc.renderer.spp;
         path_integrator.max_depth = scene_desc.integrator.max_bounces;
     }
-    println!("{:>16} took: {}", "Scene building", pretty_duration(Instant::now() - build_start));
-    let render_start = Instant::now();
+    log::info!("{:>16} took: {}", "Scene building", build_timer);
+    let render_timer = Timer::start();
     path_integrator.render(&camera, &mut render_buffer);
-    println!("{:>16} took: {}", "Rendering", pretty_duration(Instant::now() - render_start));
+    log::info!("{:>16} took: {}", "Rendering", render_timer);
 
     let image = render_buffer.resolve();
 
@@ -89,12 +118,9 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>{
     encoder.set_color(png::ColorType::RGB);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
-    let saved = writer.write_image_data(&image_ldr);
+    writer.write_image_data(&image_ldr)?;
 
-    match saved {
-        Ok(_) => log::info!("Image written successfully"),
-        Err(e) => log::error!("Image couldn't be written: {}", e),
-    };
+    log::info!("Image written successfully");
 
     Ok(())
 }

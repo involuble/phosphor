@@ -8,9 +8,7 @@ use crate::colour::*;
 use crate::camera::*;
 use crate::render_buffer::*;
 use crate::sampling::*;
-
-const DEFAULT_SPP: u32 = 8;
-const DEFAULT_BOUNCES: u32 = 4;
+use crate::materials::bsdf::Bsdf;
 
 pub struct PathIntegrator {
     scene: Scene,
@@ -19,11 +17,11 @@ pub struct PathIntegrator {
 }
 
 impl PathIntegrator {
-    pub fn new(scene: Scene) -> Self {
+    pub fn new(scene: Scene, spp: u32, max_depth: u32) -> Self {
         PathIntegrator {
-            scene: scene,
-            spp: DEFAULT_SPP,
-            max_depth: DEFAULT_BOUNCES,
+            scene,
+            spp,
+            max_depth,
         }
     }
 
@@ -82,12 +80,15 @@ impl PathIntegrator {
             let weight = if depth == 0 { 1.0 } else { 0.0 };
             radiance += reflectance * weight * light_sample.radiance;
 
-            let shading = self.scene.shading_parameters_at(&hit);
+            let shading = ShadingParameters {
+                basis: TangentFrame::from_normal(hit.Ng),
+            };
+            let bsdf = self.scene.bsdf_at(&hit);
 
-            radiance += reflectance * self.direct_light_sample(rng, &ray, &hit, &shading);
+            radiance += reflectance * self.direct_light_sample(rng, &ray, &hit, &shading, &bsdf);
 
             let xi = rng.next_2d();
-            let bsdf_sample = shading.bsdf.sample(xi, &shading.basis, ray.dir);
+            let bsdf_sample = bsdf.sample(xi, &shading.basis, ray.dir);
 
             if bsdf_sample.pdf.0 > EPSILON {
                 reflectance *= bsdf_sample.reflectance * dot(bsdf_sample.w_o, hit.Ng) / bsdf_sample.pdf.0;
@@ -102,7 +103,7 @@ impl PathIntegrator {
         radiance
     }
 
-    fn direct_light_sample(&self, rng: &mut PathSample, ray: &Ray, hit: &Hit, shading: &ShadingParameters) -> Colour {
+    fn direct_light_sample(&self, rng: &mut PathSample, ray: &Ray, hit: &Hit, shading: &ShadingParameters, bsdf: &impl Bsdf) -> Colour {
         if self.scene.lights.len() == 0 {
             return Colour::zero();
         }
@@ -126,7 +127,7 @@ impl PathIntegrator {
             let mut rayhit = RayHit::from_ray(light_ray.into());
             self.scene.intersect(&mut rayhit);
             if light_id == rayhit.hit.geom_id {
-                let bsdf_sample = shading.bsdf.eval(&shading.basis, ray.dir, light_sample.dir);
+                let bsdf_sample = bsdf.eval(&shading.basis, ray.dir, light_sample.dir);
                 return light_sample.radiance * bsdf_sample.reflectance * n_dot_l / light_sample.pdf.0;
             }
         }

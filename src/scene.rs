@@ -8,7 +8,6 @@ use scene_desc::SceneDescription;
 
 use crate::math::*;
 use crate::colour::*;
-use crate::material_type::*;
 use crate::materials::*;
 use crate::geometry::*;
 use crate::geometry::{Sphere};
@@ -18,6 +17,11 @@ pub struct Scene {
     primitives: VecMap<Primitive>,
     skybox: Colour,
     pub lights: Vec<(GeomID, Box<dyn SampleableEmitter>)>,
+}
+
+#[derive(Debug, Clone)]
+pub enum MaterialType {
+    Diffuse(Lambert),
 }
 
 struct Primitive {
@@ -45,7 +49,6 @@ pub enum EmissiveGeometry {
 }
 
 pub struct ShadingParameters {
-    pub bsdf: Box<dyn Bsdf>,
     pub basis: TangentFrame,
 }
 
@@ -74,11 +77,11 @@ impl Scene {
             EmissiveGeometry::Quad(q) => q.eval_emission_at(ray.origin, p),
         }
     }
-    
-    pub fn shading_parameters_at(&self, hit: &Hit) -> ShadingParameters {
-        ShadingParameters {
-            bsdf: self.primitives[hit.geom_id.unwrap() as usize].material.compute_bsdf(hit),
-            basis: TangentFrame::from_normal(hit.Ng),
+
+    pub fn bsdf_at(&self, hit: &Hit) -> impl Bsdf {
+        debug_assert!(!hit.geom_id.is_invalid());
+        match self.primitives[hit.geom_id.id as usize].material {
+            MaterialType::Diffuse(ref l) => l.clone(),
         }
     }
 }
@@ -105,25 +108,25 @@ const CUBE_VERTICES: [Point3<f32>; 8] = [
     Point3 { x:  0.5, y:  0.5, z:  0.5 },
 ];
 
-const CUBE_INDICES: [embree::Triangle; 12] = [
+const CUBE_INDICES: [embree::IndexedTriangle; 12] = [
     // Left side
-    embree::Triangle { v0: 0, v1: 1, v2: 2 },
-    embree::Triangle { v0: 1, v1: 3, v2: 2 },
+    embree::IndexedTriangle { v0: 0, v1: 1, v2: 2 },
+    embree::IndexedTriangle { v0: 1, v1: 3, v2: 2 },
     // Right side
-    embree::Triangle { v0: 4, v1: 6, v2: 5 },
-    embree::Triangle { v0: 5, v1: 6, v2: 7 },
+    embree::IndexedTriangle { v0: 4, v1: 6, v2: 5 },
+    embree::IndexedTriangle { v0: 5, v1: 6, v2: 7 },
     // Bottom side
-    embree::Triangle { v0: 0, v1: 4, v2: 1 },
-    embree::Triangle { v0: 1, v1: 4, v2: 5 },
+    embree::IndexedTriangle { v0: 0, v1: 4, v2: 1 },
+    embree::IndexedTriangle { v0: 1, v1: 4, v2: 5 },
     // Top side
-    embree::Triangle { v0: 2, v1: 3, v2: 6 },
-    embree::Triangle { v0: 3, v1: 7, v2: 6 },
+    embree::IndexedTriangle { v0: 2, v1: 3, v2: 6 },
+    embree::IndexedTriangle { v0: 3, v1: 7, v2: 6 },
     // Front side
-    embree::Triangle { v0: 0, v1: 2, v2: 4 },
-    embree::Triangle { v0: 2, v1: 6, v2: 4 },
+    embree::IndexedTriangle { v0: 0, v1: 2, v2: 4 },
+    embree::IndexedTriangle { v0: 2, v1: 6, v2: 4 },
     // Back side
-    embree::Triangle { v0: 1, v1: 5, v2: 3 },
-    embree::Triangle { v0: 3, v1: 5, v2: 7 },
+    embree::IndexedTriangle { v0: 1, v1: 5, v2: 3 },
+    embree::IndexedTriangle { v0: 3, v1: 5, v2: 7 },
 ];
 
 // Source: https://refractiveindex.info/
@@ -253,7 +256,7 @@ impl SceneBuilder {
             material: material,
         };
 
-        let index = vec![embree::Triangle::new(0, 1, 2), embree::Triangle::new(0, 2, 3)];
+        let index = vec![embree::IndexedTriangle::new(0, 1, 2), embree::IndexedTriangle::new(0, 2, 3)];
         let mesh = embree::TriangleMesh::new(&self.device, index, Vec::from(quad.points().as_ref()));
         let id = self.scene.attach(mesh);
         self.primitives.insert(id.unwrap() as usize, prim);

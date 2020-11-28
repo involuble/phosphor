@@ -13,7 +13,7 @@ members = [
 ]
 
 [dependencies]
-cgmath = { version = "0.17" }
+cgmath = { version = "0.17", default-features = false }
 log = "0.4"
 fern = "0.5"
 rand_core = "0.5"
@@ -22,6 +22,7 @@ png = "0.15"
 num-traits = "0.2"
 vec_map = "0.8"
 rayon = "1"
+argh = "0.1"
 
 embree = { path = "../embree-rs" }
 
@@ -37,18 +38,20 @@ scene_desc = { path = "scene_desc" }
 
 [profile.dev]
 opt-level = 2
+debug = 1 # Line numbers only
+
+[profile.dev.build-override]
+opt-level = 0
 
 # Set the default for dependencies.
 # [profile.dev.package."*"]
 # opt-level = 2
 
-#[profile.release]
-#panic = 'abort'
-#codegen-units = 1
-#lto = true
+[profile.release]
+panic = 'abort'
+codegen-units = 1
+lto = true
 #lto = "thin"
-#opt-level = "z"
-#debug = 1 # Line numbers only
 
 [profile.release.build-override]
 opt-level = 0

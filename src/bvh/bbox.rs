@@ -2,16 +2,16 @@ use cgmath::*;
 
 use geometry::*;
 
-pub struct BBox {
+pub struct AABBox {
     pub min: Point3<f32>,
     pub max: Point3<f32>,
 }
 
 pub trait Boundable {
-    fn bounds(&self) -> BBox;
+    fn bounds(&self) -> AABBox;
 }
 
-impl BBox {
+impl AABBox {
     pub fn intersect(&self, ray: Ray) -> bool {
         // "A Ray-Box Intersection Algorithm and Efficient Dynamic Voxel Rendering"
         // http://www.jcgt.org/published/0007/03/04/
@@ -34,10 +34,10 @@ impl BBox {
         tmax >= max(tmin, 0.0)
     }
 
-    pub fn union(b1: BBox, b2: BBox) -> BBox {
+    pub fn union(b1: AABBox, b2: AABBox) -> AABBox {
         let min = Vector3::new(min(b1[0], b2[0]), min(b1[1], b2[1]), min(b1[2], b2[2]));
         let max = Vector3::new(max(b1[0], b2[0]), max(b1[1], b2[1]), max(b1[2], b2[2]));
-        BBox { min: min, max: max }
+        AABBox { min, max }
     }
 
     // pub fn max_dim(&self) -> u32 {
