@@ -1,13 +1,68 @@
-use rand_core::{RngCore, SeedableRng};
-use rand_pcg::Pcg32;
-
 use std::ops::Range;
 
-pub struct PathSample(Pcg32);
+pub struct WyRand {
+    seed: u64,
+}
+
+impl WyRand {
+    fn seed_from_u64(seed: u64) -> Self {
+        WyRand { seed }
+    }
+    
+    fn next_u64(&mut self) -> u64 {
+        self.seed = self.seed.wrapping_add(0xa0761d6478bd642f);
+        let t: u128 = (self.seed as u128).wrapping_mul((self.seed ^ 0xe7037ed1a0b428db) as u128);
+        let ret = ((t >> 64) ^ t) as u64;
+        ret
+    }
+
+    fn next_u32(&mut self) -> u32 {
+        self.next_u64() as u32
+    }
+}
+
+pub struct Rand32 {
+    state: u64,
+    inc: u64,
+}
+
+impl Rand32 {
+    const DEFAULT_INC: u64 = 1442695040888963407;
+    const MULTIPLIER: u64 = 6364136223846793005;
+
+    fn seed_from_u64(seed: u64) -> Self {
+        Self::seed_from_u64_inc(seed, Self::DEFAULT_INC)
+    }
+
+    fn seed_from_u64_inc(seed: u64, increment: u64) -> Self {
+        let mut rng = Self {
+            state: 0,
+            inc: increment.wrapping_shl(1) | 1,
+        };
+        // This initialization song-and-dance is a little odd,
+        // but seems to be just how things go.
+        let _ = rng.next_u32();
+        rng.state = rng.state.wrapping_add(seed);
+        let _ = rng.next_u32();
+        rng
+    }
+
+    fn next_u32(&mut self) -> u32 {
+        let oldstate: u64 = self.state;
+        self.state = oldstate
+            .wrapping_mul(Self::MULTIPLIER)
+            .wrapping_add(self.inc);
+        let xorshifted: u32 = (((oldstate >> 18) ^ oldstate) >> 27) as u32;
+        let rot: u32 = (oldstate >> 59) as u32;
+        xorshifted.rotate_right(rot)
+    }
+}
+
+pub struct PathSample(Rand32);
 
 impl PathSample {
     pub fn from_seed(seed: u64) -> Self {
-        PathSample(Pcg32::seed_from_u64(seed))
+        PathSample(Rand32::seed_from_u64(seed))
     }
 
     pub fn next_u32(&mut self) -> u32 {

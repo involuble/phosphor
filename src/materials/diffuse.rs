@@ -31,20 +31,20 @@ fn sample_cos_hempisphere(xi: [f32; 2]) -> (Vec3, f32) {
 }
 
 impl Bsdf for Lambert {
-    fn sample(&self, xi: [f32; 2], basis: &TangentFrame, _w_i: Vec3) -> BsdfSample {
-        let (w_o_local, z) = sample_cos_hempisphere(xi);
+    fn sample(&self, xi: [f32; 2], basis: &TangentFrame, _w_o: Vec3) -> BsdfSample {
+        let (w_i_local, z) = sample_cos_hempisphere(xi);
         BsdfSample {
             reflectance: self.albedo * INV_PI,
-            w_o: basis.transform(w_o_local).normalize(),
+            w_i: basis.transform(w_i_local).normalize(),
             pdf: PdfW(z * INV_PI),
         }
     }
 
-    fn eval(&self, basis: &TangentFrame, _w_i: Vec3, w_o: Vec3) -> BsdfSample {
+    fn eval(&self, basis: &TangentFrame, _w_o: Vec3, w_i: Vec3) -> BsdfSample {
         BsdfSample {
             reflectance: self.albedo * INV_PI,
-            w_o: w_o,
-            pdf: PdfW(dot(basis.normal, w_o) * INV_PI),
+            w_i: w_i,
+            pdf: PdfW(dot(basis.normal, w_i) * INV_PI),
         }
     }
 

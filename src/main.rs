@@ -27,7 +27,7 @@ use crate::path_integrator::*;
 use crate::render_buffer::*;
 
 /// Render the given scene file
-#[derive(FromArgs)]
+#[derive(Debug, FromArgs)]
 struct Args {
     /// samples per pixel
     #[argh(option, short = 's')]
@@ -101,6 +101,7 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>>{
         path_integrator.spp = scene_desc.renderer.spp;
         path_integrator.max_depth = scene_desc.integrator.max_bounces;
     }
+    
     log::info!("{:>16} took: {}", "Scene building", build_timer);
     let render_timer = Timer::start();
     path_integrator.render(&camera, &mut render_buffer);

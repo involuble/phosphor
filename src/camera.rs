@@ -21,7 +21,7 @@ impl From<scene_import::Camera> for Camera {
             camera.transform.position.into(),
             camera.transform.look_at.into(),
             camera.transform.up.into(),
-            camera.fov_degrees,
+            camera.fov / aspect,
             aspect
         )
     }

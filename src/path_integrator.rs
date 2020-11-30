@@ -91,13 +91,13 @@ impl PathIntegrator {
             let bsdf_sample = bsdf.sample(xi, &shading.basis, ray.dir);
 
             if bsdf_sample.pdf.0 > EPSILON {
-                reflectance *= bsdf_sample.reflectance * dot(bsdf_sample.w_o, hit.Ng) / bsdf_sample.pdf.0;
+                reflectance *= bsdf_sample.reflectance * dot(bsdf_sample.w_i, hit.Ng) / bsdf_sample.pdf.0;
             } else {
                 reflectance = Colour::zero();
             }
             debug_assert!(reflectance.r >= 0.0 && reflectance.g >= 0.0 && reflectance.b >= 0.0, "Reflectance should be positive");
 
-            ray = Ray::new(ray.point_at_dist(ray.tfar), bsdf_sample.w_o, ::std::f32::MAX);
+            ray = Ray::new(ray.point_at_dist(ray.tfar), bsdf_sample.w_i, ::std::f32::MAX);
             ray.offset(hit.Ng);
         }
         radiance
@@ -129,7 +129,7 @@ impl PathIntegrator {
             // if !occluded {
             let mut rayhit = RayHit::from_ray(light_ray);
             self.scene.intersect(&mut rayhit);
-            if light_id == rayhit.hit.geom_id {
+            if light_id == rayhit.hit.geom_id || (light_sample.distance == f32::INFINITY && !rayhit.hit.is_hit()) {
                 let bsdf_sample = bsdf.eval(&shading.basis, ray.dir, light_sample.dir);
                 return light_sample.radiance * bsdf_sample.reflectance * n_dot_l / light_sample.pdf.0;
             }

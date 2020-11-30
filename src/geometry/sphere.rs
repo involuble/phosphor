@@ -155,3 +155,37 @@ impl UserPrimitive for Sphere {
             self.center + Vec3::new(self.radius, self.radius, self.radius))
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct InfiniteSphereCap {
+    pub cap_dir: Vec3,
+    pub cap_angle: f32,
+    pub emission: Colour,
+}
+
+impl SampleableEmitter for InfiniteSphereCap {
+    fn eval_emission_at(&self, _initial: Vec3, _p: Vec3) -> LightSample {
+        unimplemented!()
+    }
+
+    fn sample(&self, xi: [f32; 2], _initial: Vec3) -> LightSample {
+        let cos_theta_max = self.cap_angle.cos();
+
+        let v = sample_cone(xi, cos_theta_max);
+
+        let (cone_x, cone_y) = make_orthonormal_basis(self.cap_dir);
+
+        let d = v.x * cone_x + v.y * cone_y + v.z * self.cap_dir;
+
+        LightSample {
+            dir: d.normalize(),
+            distance: f32::INFINITY,
+            radiance: self.emission,
+            pdf: PdfW(1.0 / (2.0 * PI * (1.0 - cos_theta_max))),
+        }
+    }
+
+    fn surface_area(&self) -> f32 {
+        f32::INFINITY
+    }
+}

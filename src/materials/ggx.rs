@@ -28,7 +28,7 @@ impl GGX {
     }
 
     #[allow(non_snake_case)]
-    fn G(&self, basis: &TangentFrame, w_i: Vec3, w_o: Vec3, m:  Vec3) -> f32 {
+    fn G(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3, m: Vec3) -> f32 {
         // This is the height correlated masking and shadowing function for GGX
         // See Eq. (99)
         // Ref: Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs
@@ -58,12 +58,12 @@ impl GGX {
         alpha_sq / (PI * denom * denom)
     }
 
-    fn sample(&self, _xi: [f32; 2], _basis: &TangentFrame, w_i: Vec3) -> BsdfSample {
-        let _w_i = Vec3::new(w_i.x * self.alpha, w_i.y * self.alpha, w_i.z);
+    fn sample(&self, _xi: [f32; 2], _basis: &TangentFrame, w_o: Vec3) -> BsdfSample {
+        let _w_o = Vec3::new(w_o.x * self.alpha, w_o.y * self.alpha, w_o.z);
         unimplemented!()
     }
 
-    fn eval(&self, basis: &TangentFrame, w_i: Vec3, w_o: Vec3) -> BsdfSample {
+    fn eval(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3) -> BsdfSample {
         let m = (w_o + w_i).normalize();
         
         let idotn = dot(w_i, basis.normal);
@@ -74,7 +74,7 @@ impl GGX {
         let ndotm = dot(basis.normal, m);
 
         let d = self.ndf(basis, m);
-        let g = self.G(basis, w_i, w_o, m);
+        let g = self.G(basis, w_o, w_i, m);
         // let f = self.spec.fresnel(odotm);
 
         let c = d * g / (4.0 * idotn * odotn);
@@ -83,7 +83,7 @@ impl GGX {
 
         BsdfSample {
             reflectance: Colour::new(c, c, c),
-            w_o: w_o,
+            w_i: w_i,
             pdf: PdfW(pdf),
         }
     }

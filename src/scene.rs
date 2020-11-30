@@ -165,7 +165,7 @@ impl SceneBuilder {
     }
 
     pub fn load_scene(&mut self, scene: &SceneDescription) {
-        // TODO: do the hashmap  stuff in scene_desc
+        // TODO: do the hashmap stuff in scene_import
         let mut materials = HashMap::new();
 
         for mat in &scene.bsdfs {
@@ -184,10 +184,11 @@ impl SceneBuilder {
             materials.insert(mat.name.clone(), m);
         }
         for prim in &scene.primitives {
-            let mat = materials.get(&prim.bsdf).expect("Undeclared material");
+            let default_material = MaterialType::Diffuse(Lambert::new(Rgb::new(1.00,0.41,0.71)));
+            let mat = materials.get(&prim.bsdf).unwrap_or(&default_material);
 
             let transform = to_affine_transform(&prim.transform);
-            let emission = prim.emission.map_or_else(Colour::zero, Into::into);
+            let emission = prim.emission.into();
 
             #[allow(unreachable_patterns)]
             match &prim.primitive {
@@ -215,6 +216,34 @@ impl SceneBuilder {
                     cube.transform_mesh(matrix);
                     self.add_mesh(cube, mat.clone());
                 }
+                scene_import::PrimitiveType::Mesh { mesh_data, .. } => {
+                    let mut positions = Vec::with_capacity(mesh_data.verts.len());
+                    let mut normals = Vec::with_capacity(mesh_data.verts.len());
+                    let mut uvs = Vec::with_capacity(mesh_data.verts.len());
+                    for vertex in mesh_data.verts.iter() {
+                        positions.push(vertex.pos.into());
+                        normals.push(vertex.normal.into());
+                        uvs.push(vertex.uv.into());
+                    }
+                    let indices = mesh_data.tris.iter().map(|t| embree::IndexedTriangle { v0: t[0], v1: t[1], v2: t[2] }).collect();
+                    let mut mesh = embree::TriangleMesh::new(&self.device, indices, positions);
+                    mesh.normals = Some(normals);
+                    mesh.tex_coords = Some(uvs);
+                    // let matrix = transform.to_matrix();
+                    // mesh.transform_mesh(matrix);
+                    self.add_mesh(mesh, mat.clone());
+                },
+                scene_import::PrimitiveType::InfiniteSphereCap { power, cap_angle, .. } => {
+                    let cap_angle = cap_angle * PI / 180.0;
+                    // 2pi * (1 - cosθ) is the solid angle subtended by a cone of angle θ
+                    let radiance = power / (2.0 * PI * (1.0 - cap_angle.cos()));
+                    let cap = InfiniteSphereCap {
+                        cap_dir: transform.transform_vector(Vec3::unit_y()).normalize(),
+                        cap_angle: cap_angle,
+                        emission: Colour::grey(radiance),
+                    };
+                    self.lights.push((GeomID::invalid(), Box::new(cap.clone())));
+                },
                 t => log::warn!("Unknown primitive type: {:?}", t),
             }
         }
@@ -271,8 +300,7 @@ impl SceneBuilder {
     }
 
     pub fn add_mesh(&mut self, mesh: embree::TriangleMesh, material: MaterialType) {
-        // TODO: Maybe shouldn't expose embree API like this
-        let id = &self.scene.attach(mesh);
+        let id = self.scene.attach(mesh);
         self.primitives.insert(id.unwrap() as usize, Primitive::new(material));
     }
 

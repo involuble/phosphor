@@ -35,8 +35,8 @@ pub enum MaterialType {
     Lambert {},
 }
 
-fn float3_zero() -> [f32; 3] {
-    [0.0, 0.0, 0.0]
+fn float3_one() -> [f32; 3] {
+    [1.0, 1.0, 1.0]
 }
 
 #[derive(Deserialize)]
@@ -54,21 +54,39 @@ pub fn vector_or_scalar<'de, D>(deserializer: D) -> Result<[f32; 3], D::Error>
     }
 }
 
-pub fn option_vector_or_scalar<'de, D>(deserializer: D) -> Result<Option<[f32; 3]>, D::Error>
-    where D: Deserializer<'de> {
-    vector_or_scalar(deserializer).map(|v| Some(v))
-}
-
 #[derive(Deserialize)]
 pub struct Primitive {
     #[serde(flatten)]
     pub primitive: PrimitiveType,
 
     pub transform: Transform,
+    #[serde(default)]
     pub bsdf: String,
     #[serde(default)]
-    #[serde(deserialize_with = "option_vector_or_scalar")]
-    pub emission: Option<[f32; 3]>,
+    #[serde(deserialize_with = "vector_or_scalar")]
+    pub emission: [f32; 3],
+}
+
+#[derive(Deserialize, Debug, Default, Copy, Clone)]
+pub struct Vertex {
+    pub pos: [f32; 3],
+    pub normal: [f32; 3],
+    pub uv: [f32; 2],
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct TriangleMesh {
+    pub verts: Vec<Vertex>,
+    pub tris: Vec<[u32; 4]>,
+}
+
+impl Default for TriangleMesh {
+    fn default() -> Self {
+        TriangleMesh {
+            verts: Vec::new(),
+            tris: Vec::new(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -78,16 +96,42 @@ pub enum PrimitiveType {
     Quad,
     Sphere,
     Cube,
+    Mesh {
+        file: String,
+        smooth: bool,
+        backface_culling: bool,
+        recompute_normals: bool,
+        #[serde(skip_deserializing)]
+        mesh_data: TriangleMesh,
+
+    },
+    InfiniteSphereCap {
+        power: f32,
+        sample: bool,
+        cap_angle: f32,
+    },
 }
 
 #[derive(Deserialize)]
 pub struct Transform {
-    #[serde(default = "float3_zero")]
+    #[serde(default)]
     pub position: [f32; 3],
+    #[serde(default = "float3_one")]
     #[serde(deserialize_with = "vector_or_scalar")]
     pub scale: [f32; 3],
     /// Euler angles specified in degrees
+    #[serde(default)]
     pub rotation: [f32; 3],
+}
+
+impl Default for Transform {
+    fn default() -> Self {
+        Transform {
+            position: [0.0, 0.0, 0.0],
+            scale: [1.0, 1.0, 1.0],
+            rotation: [0.0, 0.0, 0.0],
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -97,8 +141,8 @@ pub struct Camera {
     pub resolution: [u32; 2],
     pub reconstruction_filter: String,
     pub transform: CameraTransform,
-    #[serde(rename = "fov")]
-    pub fov_degrees: f32,
+    /// Field of view (in degrees)
+    pub fov: f32,
     #[serde(rename = "type")]
     pub camera_type: String,
 }
