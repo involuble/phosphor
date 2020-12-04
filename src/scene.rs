@@ -22,7 +22,46 @@ pub struct Scene {
 #[derive(Debug, Clone)]
 pub enum MaterialType {
     Diffuse(Lambert),
-    // Null,
+    Glossy(Glossy),
+    Null,
+}
+
+impl Bsdf for MaterialType {
+    fn sample(&self, xi: [f32; 2], basis: &TangentFrame, w_o: Vec3) -> BsdfSample {
+        match self {
+            MaterialType::Null => {
+                BsdfSample {
+                    reflectance: Colour::one(),
+                    w_i: -w_o,
+                    pdf: PdfW(1.0),
+                }
+            },
+            MaterialType::Diffuse(m) => { m.sample(xi, basis, w_o) },
+            MaterialType::Glossy(m) => { m.sample(xi, basis, w_o) },
+        }
+    }
+
+    fn eval(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3) -> BsdfSample {
+        match self {
+            MaterialType::Diffuse(m) => { m.eval(basis, w_o, w_i) },
+            MaterialType::Glossy(m) => { m.eval(basis, w_o, w_i) },
+            MaterialType::Null => {
+                BsdfSample {
+                    reflectance: Colour::one(),
+                    w_i: -w_o,
+                    pdf: PdfW(1.0),
+                }
+            },
+        }
+    }
+
+    fn albedo(&self) -> Colour {
+        todo!()
+    }
+
+    fn reflectivity(&self) -> f32 {
+        todo!()
+    }
 }
 
 struct Primitive {
@@ -85,9 +124,7 @@ impl Scene {
 
     pub fn bsdf_at(&self, hit: &Hit) -> impl Bsdf {
         debug_assert!(!hit.geom_id.is_invalid());
-        match self.primitives[hit.geom_id.id as usize].material {
-            MaterialType::Diffuse(ref l) => l.clone(),
-        }
+        self.primitives[hit.geom_id.id as usize].material.clone()
     }
 }
 
@@ -135,11 +172,11 @@ const CUBE_INDICES: [embree::IndexedTriangle; 12] = [
 ];
 
 // Source: https://refractiveindex.info/
-// const _METAL_IOR: [(&str, &str, Ior); 3] = [
-//     ("Au", "Gold", Ior { n: [0.15557, 0.42415, 1.3831], k: [3.6024, 2.4721, 1.9155]}),
-//     ("Ag", "Silver", Ior { n: [0.052225, 0.059582, 0.040000], k: [4.4094, 3.5974, 2.6484]}),
-//     ("Cu", "Copper", Ior { n: [0.23780, 1.0066, 1.2404], k: [3.6264, 2.5823, 2.3929]}),
-// ];
+const METAL_IOR: [(&str, &str, Ior); 3] = [
+    ("Au", "Gold", Ior { n: [0.15557, 0.42415, 1.3831], k: [3.6024, 2.4721, 1.9155]}),
+    ("Ag", "Silver", Ior { n: [0.052225, 0.059582, 0.040000], k: [4.4094, 3.5974, 2.6484]}),
+    ("Cu", "Copper", Ior { n: [0.23780, 1.0066, 1.2404], k: [3.6264, 2.5823, 2.3929]}),
+];
 
 pub struct SceneBuilder {
     pub device: embree::Device,
@@ -168,23 +205,34 @@ impl SceneBuilder {
         // TODO: do the hashmap stuff in scene_import
         let mut materials = HashMap::new();
 
+        #[allow(unreachable_patterns)]
         for mat in &scene.bsdfs {
             let albedo = mat.albedo.into();
-            #[allow(unreachable_patterns)]
             let m = match &mat.bsdf {
                 scene_import::MaterialType::Lambert {} => {
                     MaterialType::Diffuse(Lambert::new(albedo))
                 },
                 scene_import::MaterialType::Null => MaterialType::Diffuse(Lambert::new(Colour::zero())),
+                scene_import::MaterialType::RoughConductor { roughness, material, .. } => {
+                    let m = METAL_IOR.iter().find(|m| m.0 == material).expect("unknown material name");
+                    let fresnel = SchlickFresnel::new(m.2);
+                    let material = Glossy {
+                        specular: fresnel,
+                        ggx: GGX::new(*roughness),
+                    };
+
+                    MaterialType::Glossy(material)
+                    // MaterialType::Diffuse(Lambert::new(Rgb::new(0.72,0.45,0.20)))
+                },
                 b => {
-                    log::warn!("Unsupported BSDF type: {:?}", b);
-                    MaterialType::Diffuse(Lambert::new(Colour::zero()))
+                    log::warn!("Unknown BSDF type: {:?}", b);
+                    MaterialType::Diffuse(Lambert::new(Rgb::new(1.00,0.41,0.71)))
                 },
             };
             materials.insert(mat.name.clone(), m);
         }
         for prim in &scene.primitives {
-            let default_material = MaterialType::Diffuse(Lambert::new(Rgb::new(1.00,0.41,0.71)));
+            let default_material = MaterialType::Null;
             let mat = materials.get(&prim.bsdf).unwrap_or(&default_material);
 
             let transform = to_affine_transform(&prim.transform);
@@ -192,10 +240,14 @@ impl SceneBuilder {
 
             #[allow(unreachable_patterns)]
             match &prim.primitive {
-                scene_import::PrimitiveType::Sphere => {
+                scene_import::PrimitiveType::Sphere { power } => {
                     let mut sphere = Sphere::unit();
                     sphere.transform_by(&transform);
                     sphere.emission = emission;
+                    if *power > 0.0 {
+                        let radiance = power / (4.0 * PI * sphere.radius * sphere.radius);
+                        sphere.emission = Colour::splat(radiance);
+                    }
                     self.add_sphere(sphere, mat.clone());
                 },
                 scene_import::PrimitiveType::Quad => {
@@ -240,7 +292,7 @@ impl SceneBuilder {
                     let cap = InfiniteSphereCap {
                         cap_dir: transform.transform_vector(Vec3::unit_y()).normalize(),
                         cap_angle: cap_angle,
-                        emission: Colour::grey(radiance),
+                        emission: Colour::splat(radiance),
                     };
                     self.lights.push((GeomID::invalid(), Box::new(cap.clone())));
                 },

@@ -21,12 +21,13 @@ impl WyRand {
     }
 }
 
-pub struct Rand32 {
+/// PRNG implementation using PCG-XSH-RR algorithm
+pub struct Pcg32 {
     state: u64,
     inc: u64,
 }
 
-impl Rand32 {
+impl Pcg32 {
     const DEFAULT_INC: u64 = 1442695040888963407;
     const MULTIPLIER: u64 = 6364136223846793005;
 
@@ -58,11 +59,11 @@ impl Rand32 {
     }
 }
 
-pub struct PathSample(Rand32);
+pub struct PathSample(Pcg32);
 
 impl PathSample {
     pub fn from_seed(seed: u64) -> Self {
-        PathSample(Rand32::seed_from_u64(seed))
+        PathSample(Pcg32::seed_from_u64(seed))
     }
 
     pub fn next_u32(&mut self) -> u32 {

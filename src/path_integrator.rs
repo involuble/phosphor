@@ -33,7 +33,7 @@ impl PathIntegrator {
         render_buffer.data.par_iter_mut().enumerate().for_each(|(index, pixel)| {
             let x_i = (index as u32) % width;
             let y_i = (index as u32) / width;
-            // if !(x_i == 247 && y_i == 242) { return; }
+            // if !(x_i == 756 && y_i == 356) { return; }
             let x = (x_i as f32) * inv_w;
             let y = (y_i as f32) * inv_h;
 
@@ -47,7 +47,7 @@ impl PathIntegrator {
                 let camera_ray = camera.get_ray(x + offset_x, y + offset_y);
                 let mut radiance = self.radiance(&camera_ray, &mut rng);
                 if radiance.is_nan() {
-                    log::warn!("NaN colour at pixel ({},{})", x_i, y_i);
+                    log::error!("NaN colour at pixel ({},{}), sample {}", x_i, y_i, sample_i);
                     radiance = Colour::new(1.0, 0.4, 0.7); // A vibrant pink colour
                 }
                 pixel.add_sample(radiance);
@@ -88,7 +88,7 @@ impl PathIntegrator {
             radiance += reflectance * self.direct_light_sample(rng, &ray, &hit, &shading, &bsdf);
 
             let xi = rng.next_2d();
-            let bsdf_sample = bsdf.sample(xi, &shading.basis, ray.dir);
+            let bsdf_sample = bsdf.sample(xi, &shading.basis, -ray.dir);
 
             if bsdf_sample.pdf.0 > EPSILON {
                 reflectance *= bsdf_sample.reflectance * dot(bsdf_sample.w_i, hit.Ng) / bsdf_sample.pdf.0;
@@ -124,13 +124,10 @@ impl PathIntegrator {
             let mut light_ray = Ray::new(hit_p, light_sample.dir, light_sample.distance);
             light_ray.offset(hit.Ng);
 
-            let light_ray = light_ray.into();
-            // let occluded = self.scene.occluded(&mut light_ray);
-            // if !occluded {
-            let mut rayhit = RayHit::from_ray(light_ray);
+            let mut rayhit = RayHit::from_ray(light_ray.into());
             self.scene.intersect(&mut rayhit);
             if light_id == rayhit.hit.geom_id || (light_sample.distance == f32::INFINITY && !rayhit.hit.is_hit()) {
-                let bsdf_sample = bsdf.eval(&shading.basis, ray.dir, light_sample.dir);
+                let bsdf_sample = bsdf.eval(&shading.basis, -ray.dir, light_sample.dir);
                 return light_sample.radiance * bsdf_sample.reflectance * n_dot_l / light_sample.pdf.0;
             }
         }

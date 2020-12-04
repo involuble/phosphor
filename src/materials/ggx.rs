@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(non_snake_case)]
 
 use super::bsdf::*;
 use crate::math::*;
@@ -6,28 +6,34 @@ use crate::colour::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct GGX {
-    pub alpha: f32,
+    alpha: f32,
+}
+
+impl GGX {
+    pub fn new(roughness: f32) -> Self {
+        GGX {
+            alpha: (roughness).max(0.04),
+        }
+    }
 }
 
 impl GGX {
     fn lambda(&self, basis: &TangentFrame, v: Vec3) -> f32 {
         // Section 5.3 Eq. (72) in [Heitz2014Microfacet]
+        let alpha_sq = self.alpha * self.alpha;
         let vdotn = dot(basis.normal, v);
 
         let cos_theta_sq = vdotn * vdotn;
-        let tan_theta_sq = 1.0 / cos_theta_sq - 1.0;
-        let tan_theta = tan_theta_sq.sqrt();
+        let tan_theta_sq = (1.0 / cos_theta_sq) - 1.0;
 
-        if tan_theta.is_infinite() {
+        if tan_theta_sq <= 0.0 {
             return 0.0;
         }
+        debug_assert!(!tan_theta_sq.is_infinite());
 
-        let a = 1.0 / (self.alpha * tan_theta);
-
-        (-1.0 + (1.0 + 1.0/(a*a)).sqrt()) / 2.0
+        (-1.0 + (1.0 + alpha_sq*tan_theta_sq).sqrt()) / 2.0
     }
 
-    #[allow(non_snake_case)]
     fn G(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3, m: Vec3) -> f32 {
         // This is the height correlated masking and shadowing function for GGX
         // See Eq. (99)
@@ -58,12 +64,35 @@ impl GGX {
         alpha_sq / (PI * denom * denom)
     }
 
-    fn sample(&self, _xi: [f32; 2], _basis: &TangentFrame, w_o: Vec3) -> BsdfSample {
-        let _w_o = Vec3::new(w_o.x * self.alpha, w_o.y * self.alpha, w_o.z);
-        unimplemented!()
+    pub fn sample_vndf(&self, xi: [f32; 2], basis: &TangentFrame, w_o: Vec3) -> Vec3 {
+        // See [Heitz18]: Sampling the GGX Distribution of Visible Normals
+
+        let Ve = basis.inv_transform(w_o);
+
+        // transforming the view direction to the hemisphere configuration
+        let Vh = Vec3::new(Ve.x * self.alpha, Ve.y * self.alpha, Ve.z);
+
+        // orthonormal basis
+        let len_sq = Vh.x * Vh.x + Vh.y * Vh.y;
+        let T1 = if len_sq > 0.0 { Vec3::new(-Vh.y, Vh.x, 0.0) / len_sq.sqrt() } else { Vec3::unit_x() };
+        let T2 = Vh.cross(T1);
+
+        // parameterization of the projected area
+        let r = xi[0].sqrt();
+        let phi = 2.0 * PI * xi[1];
+        let t1 = r * phi.cos();
+        let t2 = r * phi.sin();
+        let s = 0.5 * (1.0 + Vh.z);
+        let t2 = (1.0 - s) * (1.0 - t1*t1).sqrt() + s*t2;
+
+        // reprojection onto hemisphere
+        let Nh: Vec3 = t1*T1 + t2*T2 + (1.0 - t1*t1 - t2*t2).max(0.0).sqrt()*Vh;
+        let Ne = Vec3::new(Nh.x * self.alpha, Nh.y * self.alpha, Nh.z.max(0.0)).normalize();
+
+        basis.transform(Ne)
     }
 
-    fn eval(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3) -> BsdfSample {
+    pub fn eval(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3) -> BsdfSample {
         let m = (w_o + w_i).normalize();
         
         let idotn = dot(w_i, basis.normal);
@@ -75,14 +104,13 @@ impl GGX {
 
         let d = self.ndf(basis, m);
         let g = self.G(basis, w_o, w_i, m);
-        // let f = self.spec.fresnel(odotm);
 
         let c = d * g / (4.0 * idotn * odotn);
 
         let pdf = ndotm * d / (4.0 * odotm);
 
         BsdfSample {
-            reflectance: Colour::new(c, c, c),
+            reflectance: Colour::splat(c),
             w_i: w_i,
             pdf: PdfW(pdf),
         }

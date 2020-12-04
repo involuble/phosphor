@@ -33,6 +33,11 @@ pub struct Material {
 pub enum MaterialType {
     Null,
     Lambert {},
+    RoughConductor {
+        roughness: f32,
+        material: String,
+        distribution: String,
+    },
 }
 
 fn float3_one() -> [f32; 3] {
@@ -94,7 +99,10 @@ impl Default for TriangleMesh {
 #[serde(tag = "type")]
 pub enum PrimitiveType {
     Quad,
-    Sphere,
+    Sphere {
+        #[serde(default)]
+        power: f32,
+    },
     Cube,
     Mesh {
         file: String,

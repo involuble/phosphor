@@ -5,6 +5,7 @@ use crate::colour::*;
 
 /// Complex index of refraction
 /// The 3 numbers correspond to values at 650nm, 550nm and 450nm, respectively (red, green and blue)
+#[derive(Debug, Clone, Copy)]
 pub struct Ior {
     /// Refractive index
     pub n: [f32; 3],
@@ -32,7 +33,7 @@ impl SchlickFresnel {
     }
     
     pub fn fresnel(&self, cos_t: f32) -> Colour {
-        self.r0 + (Colour::one() - self.r0) * (1.0 - cos_t).powf(5.0)
+        self.r0 + (Colour::one() - self.r0) * (1.0 - cos_t).powi(5)
     }
 }
 

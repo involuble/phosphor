@@ -51,6 +51,10 @@ impl<S: ColourSpace> Rgb<S> {
         Self::new(value, value, value)
     }
 
+    pub fn splat(value: f32) -> Self {
+        Self::new(value, value, value)
+    }
+
     pub fn is_nan(&self) -> bool {
         self.r.is_nan() | self.g.is_nan() | self.b.is_nan()
     }
@@ -59,9 +63,9 @@ impl<S: ColourSpace> Rgb<S> {
         Rgb::new(1.0, 1.0, 1.0)
     }
 
-    // pub fn zero() -> Self {
-    //     Rgb::new(0.0, 0.0, 0.0)
-    // }
+    pub fn zero() -> Self {
+        Rgb::new(0.0, 0.0, 0.0)
+    }
 
     // pub fn black() -> Self {
     //     Self::zero()

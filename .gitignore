@@ -4,6 +4,7 @@ render.png
 *.dll
 *.log
 *.cxl
+papers
 scenes/tungsten
 scenes/obj
 src-old

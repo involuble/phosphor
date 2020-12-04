@@ -1,4 +1,4 @@
-use glam::*;
+use super::prelude::*;
 
 /// An orthonormal basis on a surface
 #[derive(Debug, Clone, Copy)]
@@ -20,6 +20,10 @@ impl TangentFrame {
 
     pub fn transform(&self, v: Vec3) -> Vec3 {
         self.tangent * v.x + self.bitangent * v.y + self.normal * v.z
+    }
+
+    pub fn inv_transform(&self, v: Vec3) -> Vec3 {
+        Vec3::new(dot(v, self.tangent), dot(v, self.bitangent), dot(v, self.normal))
     }
 }
 
