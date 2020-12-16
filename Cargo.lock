@@ -165,7 +165,6 @@ dependencies = [
  "bitflags",
  "embree-sys",
  "glam",
- "log",
  "memoffset",
  "vec_map",
 ]
@@ -366,6 +365,7 @@ name = "scene_import"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "glam",
  "serde",
  "serde_json",
  "tobj",

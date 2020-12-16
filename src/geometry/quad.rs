@@ -60,7 +60,7 @@ impl SampleableEmitter for Quad {
     }
 
     fn surface_area(&self) -> f32 {
-        self.normal.length()
+        self.edge1.cross(self.edge2).length()
     }
 }
 

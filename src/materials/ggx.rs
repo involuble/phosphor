@@ -1,8 +1,6 @@
 #![allow(non_snake_case)]
 
-use super::bsdf::*;
 use crate::math::*;
-use crate::colour::*;
 
 #[derive(Debug, Clone, Copy)]
 pub struct GGX {
@@ -12,7 +10,7 @@ pub struct GGX {
 impl GGX {
     pub fn new(roughness: f32) -> Self {
         GGX {
-            alpha: (roughness).max(0.04),
+            alpha: (roughness * roughness).max(0.001),
         }
     }
 }
@@ -26,17 +24,23 @@ impl GGX {
         let cos_theta_sq = vdotn * vdotn;
         let tan_theta_sq = (1.0 / cos_theta_sq) - 1.0;
 
-        if tan_theta_sq <= 0.0 {
-            return 0.0;
-        }
+        // if tan_theta_sq <= 0.0 {
+        //     return 0.0;
+        // }
         debug_assert!(!tan_theta_sq.is_infinite());
 
-        (-1.0 + (1.0 + alpha_sq*tan_theta_sq).sqrt()) / 2.0
+        let inv_a_sq = alpha_sq*tan_theta_sq;
+
+        (-1.0 + (1.0 + inv_a_sq).sqrt()) / 2.0
     }
 
-    fn G(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3, m: Vec3) -> f32 {
+    fn G1(&self, basis: &TangentFrame, w: Vec3) -> f32 {
+        1.0 / (1.0 + self.lambda(basis, w))
+    }
+
+    fn G2(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3, m: Vec3) -> f32 {
         // This is the height correlated masking and shadowing function for GGX
-        // See Eq. (99)
+        // See Section 6, Eq. (99)
         // Ref: Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs
         //  [Heitz2014Microfacet]
         // χ+(a) is the Heaviside function: 1 if a > 0, 0 if a <= 0
@@ -92,7 +96,7 @@ impl GGX {
         basis.transform(Ne)
     }
 
-    pub fn eval(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3) -> BsdfSample {
+    pub fn eval(&self, basis: &TangentFrame, w_o: Vec3, w_i: Vec3) -> (f32, f32) {
         let m = (w_o + w_i).normalize();
         
         let idotn = dot(w_i, basis.normal);
@@ -100,19 +104,20 @@ impl GGX {
 
         let odotm = dot(w_o, m);
 
-        let ndotm = dot(basis.normal, m);
-
         let d = self.ndf(basis, m);
-        let g = self.G(basis, w_o, w_i, m);
+        let g = self.G2(basis, w_o, w_i, m);
 
-        let c = d * g / (4.0 * idotn * odotn);
+        let denom = 4.0 * idotn * odotn;
 
-        let pdf = ndotm * d / (4.0 * odotm);
+        let c = d * g / denom;
 
-        BsdfSample {
-            reflectance: Colour::splat(c),
-            w_i: w_i,
-            pdf: PdfW(pdf),
-        }
+        // [Heitz18] says:
+        //   Output Ne: normal sampled with PDF D_Ve(Ne) = G1(Ve) * max(0, dot(Ve, Ne)) * D(Ne) / Ve.z
+        // Using the separable form of G2 from [Heitz14] Eq. 98, G1(ωo) = χ+(ωo · ωm) / 1+Λ(ωo)
+        // So PDF = G1(w_o) * max(0, odotm) * D(w_m) / odotn / (4 * odotm)
+        // let pdf = ndotm * d / (4.0 * odotm);
+        let pdf = self.G1(basis, w_o) * d * odotm.max(0.0) / denom;
+
+        (c, pdf)
     }
 }

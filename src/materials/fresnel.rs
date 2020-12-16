@@ -49,6 +49,7 @@ impl DielectricFresnel {
     }
 
     pub fn fresnel(&self, cos_t: f32) -> f32 {
+        // https://seblagarde.wordpress.com/2013/04/29/memo-on-fresnel-equations/
         let sin_theta_sq = 1.0 - cos_t * cos_t;
         let s = (1.0 - sin_theta_sq / (self.n * self.n)).sqrt();
         // r⊥

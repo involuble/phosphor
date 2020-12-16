@@ -29,12 +29,15 @@ use crate::render_buffer::*;
 /// Render the given scene file
 #[derive(Debug, FromArgs)]
 struct Args {
-    /// samples per pixel
-    #[argh(option, short = 's')]
-    samples: Option<u32>,
     /// input scene file
     #[argh(positional)]
     scene_file: String,
+    /// samples per pixel
+    #[argh(option, short = 'n')]
+    samples: Option<u32>,
+    /// output image file
+    #[argh(option, short = 'o')]
+    output: Option<String>,
 }
 
 struct Timer {

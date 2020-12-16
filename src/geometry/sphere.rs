@@ -165,7 +165,7 @@ pub struct InfiniteSphereCap {
 
 impl SampleableEmitter for InfiniteSphereCap {
     fn eval_emission_at(&self, _initial: Vec3, _p: Vec3) -> LightSample {
-        unimplemented!()
+        panic!("this shouldn't happen");
     }
 
     fn sample(&self, xi: [f32; 2], _initial: Vec3) -> LightSample {

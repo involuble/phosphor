@@ -27,6 +27,8 @@ embree = { path = "../embree-rs" }
 
 scene_import = { path = "scene_import" }
 
+# imgref = "1.7"
+
 # indicatif = "0.13"
 
 # state = "0.4"
