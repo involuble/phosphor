@@ -1,4 +1,3 @@
-use std::num::Wrapping;
 use std::ops::Range;
 
 pub struct WyRand {
@@ -22,66 +21,36 @@ impl WyRand {
     }
 }
 
-pub struct Jsf32 {
-    a: Wrapping<u32>,
-    b: Wrapping<u32>,
-    c: Wrapping<u32>,
-    d: Wrapping<u32>,
-}
-
-impl Jsf32 {
-    fn seed_from_u64(seed: u64) -> Self {
-        let seed = seed ^ (seed >> 32);
-        let seed = Wrapping(seed as u32);
-        let mut j = Jsf32 { a: Wrapping(0xf1ea5eed), b: seed, c: seed, d: seed };
-        for _ in 0..20 {
-            let _ = j.next_u32();
-        }
-        j
-    }
-
-    fn next_u32(&mut self) -> u32 {
-        let e = self.a - Wrapping(self.b.0.rotate_left(27));
-        self.a = self.b ^ Wrapping(self.c.0.rotate_left(17));
-        self.b = self.c + self.d;
-        self.c = self.d + e;
-        self.d = e + self.a;
-        e.0
-    }
-}
-
 /// PRNG implementation using PCG-XSH-RR algorithm
 pub struct Pcg32 {
     state: u64,
-    inc: u64,
+    // inc: u64,
 }
 
 impl Pcg32 {
-    const DEFAULT_INC: u64 = 1442695040888963407;
+    const INCREMENT: u64 = 1442695040888963407;
     const MULTIPLIER: u64 = 6364136223846793005;
 
     fn seed_from_u64(seed: u64) -> Self {
-        Self::seed_from_u64_inc(seed, Self::DEFAULT_INC)
-    }
-
-    fn seed_from_u64_inc(seed: u64, increment: u64) -> Self {
         let mut rng = Self {
             state: 0,
-            inc: increment.wrapping_shl(1) | 1,
+            // inc: increment.wrapping_shl(1) | 1,
         };
-        // This initialization song-and-dance is a little odd,
-        // but seems to be just how things go.
         let _ = rng.next_u32();
         rng.state = rng.state.wrapping_add(seed);
         let _ = rng.next_u32();
         rng
     }
 
+    fn step(&mut self) {
+        self.state = self.state
+            .wrapping_mul(Self::MULTIPLIER)
+            .wrapping_add(Self::INCREMENT);
+    }
+
     fn next_u32(&mut self) -> u32 {
         let oldstate: u64 = self.state;
-        self.state = oldstate
-            .wrapping_mul(Self::MULTIPLIER)
-            .wrapping_add(self.inc);
+        self.step();
         let xorshifted: u32 = (((oldstate >> 18) ^ oldstate) >> 27) as u32;
         let rot: u32 = (oldstate >> 59) as u32;
         xorshifted.rotate_right(rot)

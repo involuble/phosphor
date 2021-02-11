@@ -1,3 +1,4 @@
+mod scene_definition;
 mod tungsten_scene;
 
 pub use crate::tungsten_scene::*;

@@ -1,7 +1,5 @@
 use crate::colour::rgb::*;
 
-use num_traits::{clamp};
-
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct sRgb {
@@ -55,7 +53,7 @@ fn srgb_to_linear_approx(c_srgb: f32) -> f32 {
 /// The input c is a normalised (in [0,1]) float
 #[allow(dead_code)]
 fn linear_to_srgb(c_linear: f32) -> f32 {
-    let c = clamp(c_linear, 0.0, 1.0);
+    let c = c_linear.clamp(0.0, 1.0);
     if c < 0.0031308 {
         12.92 * c
     } else {
@@ -66,7 +64,7 @@ fn linear_to_srgb(c_linear: f32) -> f32 {
 
 fn linear_to_srgb_approx(c_linear: f32) -> f32 {
     // See: https://chilliant.blogspot.ca/2012/08/srgb-approximations-for-hlsl.html
-    let c_linear = clamp(c_linear, 0.0, 1.0);
+    let c_linear = c_linear.clamp(0.0, 1.0);
     // let s1 = c_linear.sqrt();
     // let s2 = s1.sqrt();
     // let s3 = s2.sqrt();

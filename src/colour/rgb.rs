@@ -2,8 +2,6 @@ use std::ops::*;
 use std::fmt;
 use std::marker::PhantomData;
 
-use num_traits::{Zero};
-
 pub trait ColourSpace {
     const NAME: &'static str;
     const XYZ_TO_RGB: [f32; 9];
@@ -67,6 +65,10 @@ impl<S: ColourSpace> Rgb<S> {
         Rgb::new(0.0, 0.0, 0.0)
     }
 
+    pub fn is_zero(&self) -> bool {
+        self.r == 0.0 && self.g == 0.0 && self.b == 0.0
+    }
+
     // pub fn black() -> Self {
     //     Self::zero()
     // }
@@ -107,16 +109,6 @@ impl<S: ColourSpace> fmt::Display for Rgb<S> {
 impl<S: ColourSpace> From<[f32; 3]> for Rgb<S> {
     fn from(a: [f32; 3]) -> Self {
         Rgb::new(a[0], a[1], a[2])
-    }
-}
-
-impl<S: ColourSpace> Zero for Rgb<S> {
-    fn zero() -> Self {
-        Rgb::new(0.0, 0.0, 0.0)
-    }
-
-    fn is_zero(&self) -> bool {
-        self.r == 0.0 && self.g == 0.0 && self.b == 0.0
     }
 }
 

@@ -39,8 +39,7 @@ impl PathIntegrator {
 
             for sample_i in 0..self.spp {
                 let mut rng = PathSample::from_seed((y_i as u64) * ((1u64 << 48) - 59) + (x_i as u64) * ((1 << 31) - 1) + (sample_i as u64));
-                let r1: f32 = rng.next_f32();
-                let r2: f32 = rng.next_f32();
+                let [r1, r2] = rng.next_2d();
                 let offset_x = r1 * inv_w;
                 let offset_y = r2 * inv_h;
 

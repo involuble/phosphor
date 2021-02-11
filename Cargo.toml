@@ -13,11 +13,10 @@ members = [
 ]
 
 [dependencies]
-glam = "0.11.0"
+glam = "0.11.2"
 log = "0.4.11"
 fern = "0.6.0"
-png = "0.16.7"
-num-traits = "0.2.14"
+png = "0.16.8"
 vec_map = "0.8.2"
 rayon = "1.5.0"
 argh = "0.1.4"

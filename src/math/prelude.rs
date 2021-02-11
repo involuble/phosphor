@@ -6,7 +6,6 @@ pub use super::tangent::*;
 // Re-exports
 
 pub use glam::*;
-pub use num_traits::{clamp, Zero};
 
 pub type Point3 = Vec3;
 
