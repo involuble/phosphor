@@ -4,8 +4,8 @@
         {
             "name": "LeftWall",
             "albedo": [
-                0.82,
                 0.68,
+                0.08,
                 0.08
             ],
             "type": "lambert"
@@ -13,9 +13,9 @@
         {
             "name": "RightWall",
             "albedo": [
-                0.0,
-                0.62,
-                0.72
+                0.02,
+                0.02,
+                0.62
             ],
             "type": "lambert"
         },
@@ -30,12 +30,11 @@
         },
         {
             "name": "Ball",
-            "albedo": [
-                0.31,
-                0.12,
-                0.62
-            ],
-            "type": "lambert"
+            "albedo": 0.3,
+            "type": "rough_conductor",
+            "material": "Ag",
+            "distribution": "beckmann",
+            "roughness": 0.01
         },
         {
             "name": "TallBox",

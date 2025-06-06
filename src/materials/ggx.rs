@@ -78,7 +78,7 @@ impl GGX {
 
         // orthonormal basis
         let len_sq = Vh.x * Vh.x + Vh.y * Vh.y;
-        let T1 = if len_sq > 0.0 { Vec3::new(-Vh.y, Vh.x, 0.0) / len_sq.sqrt() } else { Vec3::unit_x() };
+        let T1 = if len_sq > 0.0 { Vec3::new(-Vh.y, Vh.x, 0.0) / len_sq.sqrt() } else { Vec3::X };
         let T2 = Vh.cross(T1);
 
         // parameterization of the projected area

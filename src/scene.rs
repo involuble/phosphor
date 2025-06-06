@@ -112,7 +112,7 @@ impl Scene {
         let e = &self.primitives[hit.geom_id.unwrap() as usize].emitter;
         match e {
             EmissiveGeometry::NotEmissive => LightSample {
-                dir: Vec3::zero(),
+                dir: Vec3::ZERO,
                 distance: 0.0,
                 radiance: Colour::zero(),
                 pdf: PdfW(1.0),
@@ -129,9 +129,9 @@ impl Scene {
 }
 
 fn to_affine_transform(transform: &scene_import::Transform) -> AffineTransform {
-    let x = Mat3::from_axis_angle(Vec3::unit_x(), transform.rotation[0] * PI / 180.0);
-    let y = Mat3::from_axis_angle(Vec3::unit_y(), transform.rotation[1] * PI / 180.0);
-    let z = Mat3::from_axis_angle(Vec3::unit_z(), transform.rotation[2] * PI / 180.0);
+    let x = Mat3::from_axis_angle(Vec3::X, transform.rotation[0] * PI / 180.0);
+    let y = Mat3::from_axis_angle(Vec3::Y, transform.rotation[1] * PI / 180.0);
+    let z = Mat3::from_axis_angle(Vec3::Z, transform.rotation[2] * PI / 180.0);
     AffineTransform {
         rotation: y * x * z,
         scale: transform.scale.into(),
@@ -140,14 +140,14 @@ fn to_affine_transform(transform: &scene_import::Transform) -> AffineTransform {
 }
 
 const CUBE_VERTICES: [Vec3; 8] = [
-    Vec3 { x: -0.5, y: -0.5, z: -0.5 },
-    Vec3 { x: -0.5, y: -0.5, z:  0.5 },
-    Vec3 { x: -0.5, y:  0.5, z: -0.5 },
-    Vec3 { x: -0.5, y:  0.5, z:  0.5 },
-    Vec3 { x:  0.5, y: -0.5, z: -0.5 },
-    Vec3 { x:  0.5, y: -0.5, z:  0.5 },
-    Vec3 { x:  0.5, y:  0.5, z: -0.5 },
-    Vec3 { x:  0.5, y:  0.5, z:  0.5 },
+    const_vec3!([-0.5, -0.5, -0.5]),
+    const_vec3!([-0.5, -0.5,  0.5]),
+    const_vec3!([-0.5,  0.5, -0.5]),
+    const_vec3!([-0.5,  0.5,  0.5]),
+    const_vec3!([ 0.5, -0.5, -0.5]),
+    const_vec3!([ 0.5, -0.5,  0.5]),
+    const_vec3!([ 0.5,  0.5, -0.5]),
+    const_vec3!([ 0.5,  0.5,  0.5]),
 ];
 
 const CUBE_INDICES: [embree::IndexedTriangle; 12] = [
@@ -290,7 +290,7 @@ impl SceneBuilder {
                     // 2pi * (1 - cosθ) is the solid angle subtended by a cone of angle θ
                     let radiance = power / (2.0 * PI * (1.0 - cap_angle.cos()));
                     let cap = InfiniteSphereCap {
-                        cap_dir: transform.transform_vector(Vec3::unit_y()).normalize(),
+                        cap_dir: transform.transform_vector(Vec3::Y).normalize(),
                         cap_angle: cap_angle,
                         emission: Colour::splat(radiance),
                     };

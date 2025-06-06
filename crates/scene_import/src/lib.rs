@@ -35,7 +35,7 @@ fn load_scene_impl(path: &Path) -> Result<SceneDescription, Box<dyn Error + Send
             scene
         },
         "obj" => {
-            let _obj = load_obj(path)?;
+            let _obj = load_obj(path, true)?;
             todo!()
         },
         format => return Err(format!("Unknown scene file format {}", format).into()),
@@ -55,6 +55,28 @@ fn load_mesh(path: &Path) -> Result<TriangleMesh, Box<dyn Error + Send + Sync>> 
             // mesh
             bincode::deserialize(&read(path)?)?
         },
+        "obj" => {
+            dbg!(path);
+            let (models, _) = tobj::load_obj(path, true)?;
+            let mut data = TriangleMesh::default();
+            for m in models {
+                let base = data.verts.len() as u32;
+                for idx in m.mesh.indices.chunks(3) {
+                    let tri = [idx[0] + base, idx[1] + base, idx[2] + base, 0];
+                    data.tris.push(tri);
+                }
+                let vertices = m.mesh.positions.len() / 3;
+                for i in 0..vertices {
+                    let vertex = Vertex {
+                        pos: [m.mesh.positions[i*3], m.mesh.positions[i*3 + 1], m.mesh.positions[i*3 + 2]],
+                        normal: [m.mesh.normals[i*3], m.mesh.normals[i*3 + 1], m.mesh.normals[i*3 + 2]],
+                        uv: [m.mesh.texcoords[i*2], m.mesh.texcoords[i*2 + 1]],
+                    };
+                    data.verts.push(vertex);
+                }
+            }
+            data
+        }
         format => return Err(format!("Unknown mesh file format {}", format).into()),
     })
 }

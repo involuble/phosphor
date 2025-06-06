@@ -21,7 +21,7 @@ pub fn refract(v: Vec3, n: Vec3, eta: f32) -> Vec3 {
     let cos_theta_v = dot(v, n);
     let k = 1.0 - eta * eta * (1.0 - cos_theta_v * cos_theta_v);
     if k < 0.0 {
-        Vec3::zero()
+        Vec3::ZERO
     } else {
         v * eta - (eta * cos_theta_v + k.sqrt()) * n
     }

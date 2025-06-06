@@ -1,8 +1,0 @@
-
-# https://doc.rust-lang.org/cargo/reference/config.html
-
-[build]
-rustflags = ["-C", "target-cpu=native"]
-
-[target.x86_64-pc-windows-msvc]
-linker = "lld-link"

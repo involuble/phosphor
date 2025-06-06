@@ -1,0 +1,23 @@
+[package]
+name = "embree-sys"
+version = "0.1.0"
+authors = ["Steven <locke9@gmail.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2018"
+links = "embree3"
+build = "build.rs"
+
+[package.metadata.docs.rs]
+features = ["docs-rs"]
+
+[package.metadata.vcpkg]
+install = ["embree3"]
+
+[build-dependencies]
+bindgen = { version = "*", optional = true }
+vcpkg = { version = "0.2", optional = true }
+pkg-config = "0.3"
+
+[features]
+default = []
+docs-rs = []

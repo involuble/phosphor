@@ -4,18 +4,18 @@
         {
             "name": "LeftWall",
             "albedo": [
-                0.82,
-                0.68,
-                0.08
+                0.7,
+                0.02,
+                0.4
             ],
             "type": "lambert"
         },
         {
             "name": "RightWall",
             "albedo": [
-                0.0,
-                0.62,
-                0.72
+                0.7,
+                0.02,
+                0.4
             ],
             "type": "lambert"
         },
@@ -30,15 +30,14 @@
         },
         {
             "name": "Ball",
-            "albedo": [
-                0.31,
-                0.12,
-                0.62
-            ],
-            "type": "lambert"
+            "albedo": 0.3,
+            "type": "rough_conductor",
+            "material": "Ag",
+            "distribution": "beckmann",
+            "roughness": 0.01
         },
         {
-            "name": "TallBox",
+            "name": "Chair",
             "albedo": [
                 0.725,
                 0.71,
@@ -160,7 +159,7 @@
                     0.3,
                     0.374592
                 ],
-                "scale": 0.3,
+                "scale": 0.03,
                 "rotation": [
                     90,
                     90,
@@ -173,23 +172,21 @@
         {
             "transform": {
                 "position": [
-                    -0.335439,
-                    0.6,
-                    -0.291415
+                    0, 0, 0
                 ],
-                "scale": [
-                    0.607289,
-                    0.597739,
-                    1.2
-                ],
+                "scale": 1,
                 "rotation": [
+                    0,
                     90,
-                    180,
-                    160.812
+                    0
                 ]
             },
-            "type": "cube",
-            "bsdf": "TallBox"
+            "type": "mesh",
+            "smooth": true,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "chair.obj",
+            "bsdf": "Chair"
         },
         {
             "transform": {

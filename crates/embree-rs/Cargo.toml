@@ -1,0 +1,22 @@
+[package]
+name = "embree"
+version = "0.1.0"
+authors = ["Steven <locke9@gmail.com>"]
+license = "Apache-2.0 OR MIT"
+description = "Wrapper for the Embree library for BVH building and traversal"
+edition = "2018"
+
+[dependencies]
+embree-sys = { path = "embree-sys" }
+glam = "0.13.1"
+bitflags = "1.2.1"
+vec_map = "0.8.2"
+memoffset = "0.6.2"
+
+[dev-dependencies]
+minifb = "0.19.3"
+derive_more = "0.99.13"
+
+[[example]]
+name = "raytracer"
+path = "examples/raytracer.rs"

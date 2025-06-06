@@ -13,7 +13,7 @@ pub struct Sphere {
 impl Sphere {
     pub fn unit() -> Self {
         Sphere {
-            center: Vec3::zero(),
+            center: Vec3::ZERO,
             radius: 1.0,
             emission: Colour::zero(),
         }
@@ -134,7 +134,7 @@ impl UserPrimitive for Sphere {
             return UserPrimHit {
                 t: t0,
                 Ng: ray.point_at_dist(t0) - self.center,
-                uv: Vec2::zero(),
+                uv: Vec2::ZERO,
             }
         }
         
@@ -143,7 +143,7 @@ impl UserPrimitive for Sphere {
             return UserPrimHit {
                 t: t1,
                 Ng: ray.point_at_dist(t1) - self.center,
-                uv: Vec2::zero(),
+                uv: Vec2::ZERO,
             }
         }
         UserPrimHit::miss()
